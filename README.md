@@ -114,4 +114,4 @@ _To be documented in Sprint 2._
 
 ## License
 
-For academic use only — Nueva Ecija University, AY 2025–2026.
+For academic use only — New Era University, AY 2025–2026.
