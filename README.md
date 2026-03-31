@@ -105,6 +105,7 @@ _To be documented in Sprint 2._
 
 | Member | Role |
 |---|---|
+| RenceChi | Project Manager |
 | prismic7 | Full-Stack Developer |
 | ZyCallado | Backend / Supabase |
 | pwecii | UX/UI Designer |
