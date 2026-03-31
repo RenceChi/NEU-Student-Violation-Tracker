@@ -1,6 +1,6 @@
 # NEU Student Violation Tracker
 
-A cross-platform mobile application that digitizes the Nueva Ecija University (NEU) student violation form and provides real-time visibility for both officers and students.
+A cross-platform mobile application that digitizes the New Era University (NEU) student violation form and provides real-time visibility for both officers and students.
 
 ---
 
