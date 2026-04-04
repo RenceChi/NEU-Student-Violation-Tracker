@@ -1,6 +1,9 @@
 > **Project:** Student Violation Knowledge Management System
+
 > **Team:** Group 3 | Section: 3BSCS-2 | AY: 2025-2026
+
 > **Maintained by:** Project Manager
+
 > **Rule:** Any decision affecting the whole team's direction, tech, or scope must be logged here.
 
 ---
