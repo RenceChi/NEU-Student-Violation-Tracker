@@ -15,19 +15,19 @@ The SECI model developed by Ikujiro Nonaka and Hirotaka Takeuchi (1995) describe
 
 SECI was chosen over Communities of Practice because it provides a clear, structured process for turning individual teacher insights into school-wide organizational knowledge. It fits perfectly with our goal of moving from simple violation logging to continuous learning and prevention.
 
-## 3. Framework-to-App Mapping (7 User Stories)
+### 3. Framework-to-App Mapping (7 User Stories)
 
-The following table maps our 7 user stories to the four phases of the SECI model. This mapping demonstrates how the NEU Student Violation Tracker functions as a genuine Knowledge Management system rather than a simple logging tool.
+The following table maps our 7 user stories to the four phases of the SECI model. This mapping demonstrates how the NEU Student Violation Tracker functions as a genuine Knowledge Management system rather than a simple logging tool. Authentication has been added as User Story 7 to resolve the HIGH risk identified in the review (missing Student/Parent authentication for US-06 Appeal Process).
 
 | # | User Story | SECI Phase | KM Rationale |
 |---|------------|------------|--------------|
 | 1 | As a teacher/adviser, I can submit a new student violation report including student details, violation type, description, date, and supporting notes/photos. | **Externalization** (Tacit → Explicit) | Converts the teacher's tacit knowledge (observations, judgment, and context) into structured, documented explicit knowledge that can be shared. |
-| 2 | As an officer/admin, I can view a dashboard showing violation statistics, trends by type, grade level, and time period. | **Combination** (Explicit → Explicit) | Reconfigures and synthesizes multiple explicit violation records into meaningful patterns, analytics, and higher-level knowledge for school decision-making. |
+| 2 | As an officer/admin, I can view a dashboard showing violation statistics, trends by type, grade level, and time period. | **Combination** (Explicit + Explicit) | Reconfigures and synthesizes multiple explicit violation records into meaningful patterns, analytics, and higher-level knowledge for school decision-making. |
 | 3 | As a teacher or counselor, I can search and view the full violation history of a specific student with all past incidents and resolutions. | **Internalization** (Explicit → Tacit) | Enables users to absorb documented cases, reflect on patterns, and enrich their own tacit knowledge for better handling of future violations. |
-| 4 | As a teacher, I can add comments or discuss a violation case with other teachers/counselors in a threaded discussion section. | **Socialization** (Tacit → Tacit) | Facilitates direct sharing of experiential and tacit insights among staff through interaction and observation of others' approaches. |
+| 4 | As a teacher, I can add comments or discuss a violation case with other teachers/counselors in a threaded discussion section. | **Socialization** (Tacit → Tacit) | Facilitates direct sharing of experiential and tacit insights among staff through interaction and observation of others’ approaches. |
 | 5 | As a student, I can view my own violation record (with guidance) and any assigned sanctions or lessons learned. | **Internalization** (Explicit → Tacit) | Helps students reflect on their actions, internalize consequences, and develop better behavioral understanding. |
-| 6 | As an admin/officer, I can assign sanctions, link violations to school policies, and generate official reports. | **Combination** (Explicit → Explicit) | Combines explicit violation data with school policies to create new, actionable knowledge and formal outputs. |
-| 7 | As a parent/guardian, I can receive notifications and view summarized information about my child's violations with recommended actions. | **Internalization** (Explicit → Tacit) | Allows parents to understand the situation and internalize their supportive role in guiding the student's behavior. |
+| 6 | As an admin/officer, I can assign sanctions, link violations to school policies, and generate official reports. | **Combination** (Explicit + Explicit) | Combines explicit violation data with school policies to create new, actionable knowledge and formal outputs. |
+| 7 | As a student or parent/guardian, I want to securely authenticate and log in to the system (using institutional email), so that I can access my personal dashboard, submit/view appeals, track status, upload evidence, and receive notifications while ensuring data privacy and role-based access.** | **Prerequisite / Cross-cutting** (Enables all SECI phases) | Foundational security layer required before any user can participate in SECI knowledge processes. Ensures only authorized users can externalize (submit appeals/evidence), combine (view reports), socialize (receive notifications), and internalize (reflect on records). Addresses the missing authentication flagged in US-06 review. |
 
 ## 4. Knowledge Architecture (Draft)
 - **Taxonomy**: Violation Type (Behavioral, Academic, Attendance, Others), Severity (Minor, Major), Contributing Factors.
