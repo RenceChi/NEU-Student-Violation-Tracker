@@ -53,3 +53,28 @@ phase of SECI (capturing tacit knowledge in the field).
   workflow has limitations for certain native modules if needed later.
 
 ---
+## Entry #2 — Adoption of the SECI Knowledge Management Framework
+
+| Field | Details |
+|---|---|
+| **Date** | April 10, 2026 |
+| **Decision Made** | Adopt the SECI Model (Socialization, Externalization, Combination, Internalization) as the core Knowledge Management framework for the Student Violation Tracker. |
+| **Status** | Decided |
+| **Who Was Consulted** | All members (Presented by KM Analyst: Jacques Carigma) |
+
+### Context & Problem
+To meet the academic requirements of the capstone, the system cannot just be a simple database or administrative log; it must actively manage and generate *knowledge*. We needed a structured academic framework to guide how the app captures tacit knowledge (like a teacher's behavioral observations) and turns it into explicit knowledge (like school-wide analytics).
+
+### Rationale for Decision
+Jacques (KM Analyst) evaluated the SECI model and presented it during the Week 1 Standup. The team agreed to adopt it because it perfectly maps to our current feature scope:
+* **Externalization:** Submitting detailed violation reports with context.
+* **Combination:** Generating dashboards and school policies from explicit records.
+* **Internalization:** Allowing users to search and review past histories.
+* **Socialization:** Facilitating threaded discussions between teachers/counselors.
+* **Crucial Addition:** The team also agreed that Authentication (User Story #7) will act as the foundational security layer that enables safe, role-based participation across all four SECI phases. 
+
+### Impact & Next Steps
+* **KM Analyst:** Will expand this framework mapping into the mandatory 4-6 page Conceptual Report with APA citations.
+* **UX/UI Designer:** Will explicitly annotate the wireframes to show how specific screens support these SECI phases (e.g., labeling the discussion board as "Socialization").
+* **Developer & QA:** Will ensure the role-based authentication is built and tested as a prerequisite to access any of these KM features.
+---
