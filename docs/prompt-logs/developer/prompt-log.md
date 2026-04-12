@@ -1,57 +1,73 @@
-# Prompt Log — prismic7 (Full-Stack Developer)
-
-This log documents all AI assistance used during the project, per the Group Execution Guidelines requirement.
-
-Each entry includes: the task, the prompt given, what the AI produced, what I changed and why, and what I learned.
+# Developer Prompt Log — prismic7
 
 ---
 
-## Entry Format
+## Entry 001
+**Date:** 2026-04-12
+**Task:** Task #31 — Initialize Expo scaffold and connect Supabase
 
-```
-### Entry #N — YYYY-MM-DD
-**Task:** Task name and issue number
-**Prompt Given:** The exact prompt or a close summary of what I asked.
-**AI Output:** What the AI generated (summary, not full paste).
-**What I Changed:** What I accepted, rejected, or modified — and why.
-**What I Learned / Decided:** Key takeaway or decision made as a result.
-```
+**Prompt given to AI:**
+Asked AI to help set up a React Native (Expo) project with Supabase, NativeWind, and Expo Router from scratch.
 
----
+**What the AI produced:**
+Step-by-step installation guide using `blank-typescript` template with manual dependency installation.
 
-## Entry #1 — 2026-03-31
+**What I changed/rejected and why:**
+The `blank-typescript` template caused repeated React version conflicts (`react@19.1.0` vs `react-dom@19.2.x`). Rejected the manual approach after multiple failed attempts. Switched to the `tabs` template (`create-expo-app@latest . --template tabs`) which comes with Expo Router pre-configured and installs all dependencies at compatible versions automatically.
 
-**Task:** Task #1 — Scaffold React Native project (Expo) & React Navigation
-
-**Prompt Given:**
-Asked AI to help scaffold a React Native Expo project with the following tech stack: Expo SDK 54, Expo Router, React Navigation, Supabase, NativeWind (Tailwind for RN), TypeScript. Provided the sprint board screenshot showing my assigned tasks.
-
-**AI Output:**
-- Generated `package.json` with all dependencies pinned to specific versions.
-- Generated config files: `babel.config.js`, `metro.config.js`, `tailwind.config.js`, `tsconfig.json`, `app.json`.
-- Generated folder structure: `app/`, `app/(officer)/`, `app/(student)/`, `src/lib/`, `src/context/`, etc.
-- Generated placeholder screens: `app/_layout.tsx`, `app/index.tsx`, `app/login.tsx`, `app/(officer)/dashboard.tsx`.
-- Generated `src/lib/supabase.ts` Supabase client singleton.
-
-**What I Changed:**
-- The initial `package.json` targeted Expo SDK 51 but `create-expo-app` had already scaffolded SDK 54 — had to reconcile version mismatches manually.
-- NativeWind v2 was initially suggested but was incompatible with the PostCSS version bundled with Expo SDK 54. Tried multiple version combinations before landing on NativeWind v4 + Tailwind v3.4.3 with `react-native-reanimated` removed (not needed for scaffold).
-- The project was initially inside OneDrive which caused file-locking errors (`EPERM`, `UNKNOWN: unknown error, read`). Moved the project to `C:\dev\` to resolve.
-- Removed `global.css` import from `_layout.tsx` during debugging, then restored it once NativeWind was confirmed working.
-- `App.tsx` and root `index.ts` were deleted since Expo Router uses `"main": "expo-router/entry"` as the entry point — keeping them caused the app to load the default template instead of our router.
-
-**What I Learned / Decided:**
-- Expo SDK 54 has stricter peer dependency requirements. Always use `--legacy-peer-deps` for this project.
-- `node_modules` should never be inside OneDrive — causes file lock errors and slow installs. All future team members should clone to a local path (e.g., `C:\dev\`).
-- NativeWind v4 requires `react-native-reanimated` but `babel-preset-expo` automatically loads it, which in turn requires `react-native-worklets`. Since we don't need animations in the scaffold, removing `react-native-reanimated` entirely resolved the bundling error.
-- Decided to document this as ADR-001 since the version resolution involved real architectural tradeoffs.
+**What I learned:**
+Always use `npx expo install` instead of `npm install` for Expo projects — it automatically resolves compatible versions. The `tabs` template is the correct starting point for Expo Router projects, not `blank-typescript`.
 
 ---
 
-## Entry #2 — _(next session)_
+## Entry 002
+**Date:** 2026-04-12
+**Task:** Task #31 — Configure NativeWind and Babel
 
-**Task:**
-**Prompt Given:**
-**AI Output:**
-**What I Changed:**
-**What I Learned / Decided:**
+**Prompt given to AI:**
+Asked AI for the correct `babel.config.js` for NativeWind v4 with Expo Router.
+
+**What the AI produced:**
+A babel config with `jsxImportSource: "nativewind"` and `plugins: ["nativewind/babel"]`.
+
+**What I changed/rejected and why:**
+This caused a `.plugins is not a valid Plugin property` error. After testing, stripped the config down to just `presets: ["babel-preset-expo"]` which resolved the bundling error. NativeWind v4 does not require the babel plugin when using the tabs template.
+
+**What I learned:**
+NativeWind v4 handles styling differently from v2 — the babel plugin approach is outdated. Always clear the cache with `--clear` when changing babel config.
+
+---
+
+## Entry 003
+**Date:** 2026-04-12
+**Task:** Task #32 — Set up folder structure
+
+**Prompt given to AI:**
+Asked AI for the correct folder structure for the project.
+
+**What the AI produced:**
+Suggested creating `/src/lib`, `/src/components`, `/src/types`, and `/docs` subfolders.
+
+**What I changed/rejected and why:**
+Kept the structure but adapted it to fit the team convention set by the PM — specifically moving `prompt-log.md` to `/docs/prompt-logs/developer/prompt-log.md` after the PM announced the new format to avoid merge conflicts.
+
+**What I learned:**
+Always check team announcements before committing folder structures. Individual files that everyone touches (like prompt logs) need to be namespaced per member.
+
+---
+
+## Entry 004
+**Date:** 2026-04-12
+**Task:** Task #33 — ADR-001
+
+**Prompt given to AI:**
+Asked AI to help write ADR-001 for the tech stack decision.
+
+**What the AI produced:**
+A markdown ADR covering React Native + Supabase with options considered and consequences.
+
+**What I changed/rejected and why:**
+Discovered the KM Analyst had already committed a more detailed `ADR-README.md` in `/docs/adr/` that included ADR-001 with fuller context and reasoning. Discarded the AI-generated file and used the existing one instead to avoid duplication.
+
+**What I learned:**
+Always check what teammates have already committed before creating new files. The existing ADR was more thorough because it was written with full team context.
