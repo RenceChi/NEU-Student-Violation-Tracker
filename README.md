@@ -4,14 +4,27 @@ A cross-platform mobile application that digitizes the New Era University (NEU) 
 
 ---
 
+## KM Framework
+
+This app is grounded in the **SECI Model** of Knowledge Management:
+
+| SECI Phase | App Feature |
+|---|---|
+| Socialization | Officer records violations observed in person |
+| Externalization | Violation data is digitized and stored in structured form |
+| Combination | System aggregates and displays violation history |
+| Internalization | Students view their own records and learn from them |
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Mobile App | React Native (Expo SDK 54) |
-| Navigation | Expo Router + React Navigation v7 |
-| Backend / Auth / DB | Supabase |
-| Styling | NativeWind (Tailwind CSS for RN) |
+| Navigation | Expo Router v6 (file-based routing) |
+| Backend / Auth / DB | Supabase (PostgreSQL + Auth) |
+| Styling | NativeWind v4 (Tailwind CSS for RN) |
 | Language | TypeScript |
 
 ---
@@ -19,31 +32,29 @@ A cross-platform mobile application that digitizes the New Era University (NEU) 
 ## Project Structure
 
 ```
-neu-violation-app/
+NEU-Student-Violation-Tracker/
 ├── app/                        # Expo Router screens
 │   ├── (officer)/              # Officer route group
-│   │   ├── _layout.tsx
-│   │   └── dashboard.tsx
+│   │   └── _layout.tsx
 │   ├── (student)/              # Student route group
 │   │   └── _layout.tsx
-│   ├── _layout.tsx             # Root layout
-│   ├── index.tsx               # Entry redirect
-│   └── login.tsx               # Login screen
+│   └── _layout.tsx             # Root layout
 ├── src/
-│   ├── context/                # React context (Auth, etc.)
+│   ├── lib/                    # Supabase client
 │   ├── components/             # Reusable UI components
-│   ├── screens/                # Additional screen components
-│   ├── lib/                    # Supabase client + utilities
-│   ├── navigation/             # Navigation helpers
 │   └── types/                  # TypeScript types
 ├── docs/
 │   ├── adr/                    # Architecture Decision Records
-│   └── standups/               # Weekly standup notes
-├── tests/                      # Test files
+│   ├── prompt-logs/            # Per-member AI prompt logs
+│   │   └── developer/
+│   │       └── prompt-log.md
+│   ├── standups/               # Weekly standup notes
+│   ├── wireframes/             # UI wireframes
+│   └── test-cases/             # QA test cases
 ├── assets/                     # Images, fonts, icons
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
-└── prompt-log.md
+└── README.md
 ```
 
 ---
@@ -53,7 +64,6 @@ neu-violation-app/
 ### Prerequisites
 
 - Node.js 18+
-- Expo CLI (`npm install -g expo-cli`)
 - Expo Go app on your mobile device
 - A Supabase project
 
@@ -62,14 +72,14 @@ neu-violation-app/
 ```bash
 # 1. Clone the repository
 git clone https://github.com/RenceChi/NEU-Student-Violation-Tracker.git
-cd neu-violation-app
+cd NEU-Student-Violation-Tracker
 
 # 2. Install dependencies
-npm install --legacy-peer-deps
+npm install
 
 # 3. Set up environment variables
-cp .env.example .env
-# Fill in your Supabase URL and anon key in .env
+# Create a .env file in the root directory and fill in your Supabase credentials
+# (see Environment Variables section below)
 
 # 4. Start the development server
 npx expo start --clear
@@ -95,21 +105,40 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
 ---
 
-## Deployment
+## Branch Strategy
 
-_To be documented in Sprint 2._
+| Branch | Purpose |
+|---|---|
+| `main` | Production — protected, PR review required |
+| `dev` | Integration branch — all features merge here first |
+| `feature/*` | Individual feature branches per member |
 
 ---
 
 ## Team
 
-| Member | Role |
+| GitHub | Role |
 |---|---|
 | RenceChi | Project Manager |
 | prismic7 | Full-Stack Developer |
-| ZyCallado | Backend / Database |
+| ZyCallado | QA & Documentation Lead |
 | pwecii | UX/UI Designer |
-| Jax-rgb | QA / Policy |
+| Jax-rgb | Knowledge Management Analyst |
+
+---
+
+## Contribution Evidence
+
+- Each member works on their own `feature/*` branch
+- All PRs target `dev` before merging to `main`
+- Prompt logs are in `/docs/prompt-logs/(role)/prompt-log.md`
+- Architecture decisions are documented in `/docs/adr/`
+
+---
+
+## Deployment
+
+_To be documented in Sprint 2._
 
 ---
 
