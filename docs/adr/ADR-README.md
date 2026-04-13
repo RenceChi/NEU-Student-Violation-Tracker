@@ -84,9 +84,33 @@ Primary reasons:
 
 ---
 
-## ADR-002: _(Reserve for next major decision)_
+## ADR-002: Supabase Auth + Row Level Security (RLS)
 
-**Date:** —
-**Status:** —
+**Date:** 2026-04-13
+**Status:** Decided
 
-_Fill in when the next architectural decision is made (e.g., state management approach, offline support strategy, deployment platform)._
+### Context
+The app requires authentication for two distinct user roles (Student and Officer/Admin). After login, each role must only see data they are authorized to access — students should not see other students' violation records, and only officers should be able to record and update violations. We needed an auth system and a data access control strategy that could enforce these rules at the database level.
+
+### Options Considered
+1. **Supabase Auth + RLS** — use Supabase's built-in auth with PostgreSQL Row Level Security policies to enforce access control at the database level.
+2. **Supabase Auth + manual filtering in app code** — use Supabase Auth but filter data in the frontend/backend logic instead of RLS.
+3. **Custom JWT auth + Express backend** — build a separate Node.js/Express backend to handle auth and data access control manually.
+
+### Decision
+Chose **Supabase Auth with RLS** for the following reasons:
+- RLS enforces access control at the database level — even if the app code has a bug, unauthorized data cannot be returned.
+- Supabase Auth integrates directly with RLS via `auth.uid()` — no extra setup needed to link logged-in users to their data.
+- Eliminates the need for a separate backend server, keeping the architecture simple within the 8-week timeline.
+- Session persistence via AsyncStorage means users stay logged in across app restarts without re-authenticating.
+
+### Consequences
+**Easier:**
+- Security is enforced at the database level — students physically cannot query other students' records even with direct API calls.
+- No separate backend needed — Supabase handles auth, session management, and data access in one platform.
+- Role-based routing in the app is straightforward — fetch role from profiles table after login and navigate accordingly.
+
+**Harder:**
+- RLS policies must be carefully written and tested — a misconfigured policy can silently block legitimate data access.
+- Debugging RLS issues can be tricky since errors are not always descriptive.
+- All team members must have the correct .env variables set up locally or the app will fail to connect.
