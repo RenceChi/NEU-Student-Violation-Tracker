@@ -1,10 +1,10 @@
-> **Project:** Student Violation Knowledge Management System
+**Project:** Student Violation Knowledge Management System
 
-> **Team:** Group 3 | Section: 3BSCS-2 | AY: 2025-2026
+**Team:** Group 3 | Section: 3BSCS-2 | AY: 2025-2026
 
-> **Maintained by:** Project Manager
+**Maintained by:** Project Manager
 
-> **Rule:** Any decision affecting the whole team's direction, tech, or scope must be logged here.
+**Rule:** Any decision affecting the whole team's direction, tech, or scope must be logged here.
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Field | Details |
 |---|---|
-| **Date** | 04/01/2026] |
+| **Date** | 04/01/2026 |
 | **Decision Made** | Use React Native (Expo) + Supabase as the full application stack |
 | **Status** | Decided |
 | **Who Was Consulted** | All 5 members (confirmed at kickoff) |
