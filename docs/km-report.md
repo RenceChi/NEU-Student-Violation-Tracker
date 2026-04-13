@@ -15,7 +15,7 @@ The SECI model developed by Ikujiro Nonaka and Hirotaka Takeuchi (1995) describe
 
 SECI was chosen over Communities of Practice because it provides a clear, structured process for turning individual teacher insights into school-wide organizational knowledge. It fits perfectly with our goal of moving from simple violation logging to continuous learning and prevention.
 
-### 3. Framework-to-App Mapping (7 User Stories)
+## 3. Framework-to-App Mapping (7 User Stories)
 
 The following table maps our 7 user stories to the four phases of the SECI model. This mapping demonstrates how the NEU Student Violation Tracker functions as a genuine Knowledge Management system rather than a simple logging tool. Authentication has been added as User Story 7 to resolve the HIGH risk identified in the review (missing Student/Parent authentication for US-06 Appeal Process).
 
@@ -27,7 +27,7 @@ The following table maps our 7 user stories to the four phases of the SECI model
 | 4 | As a teacher, I can add comments or discuss a violation case with other teachers/counselors in a threaded discussion section. | **Socialization** (Tacit → Tacit) | Facilitates direct sharing of experiential and tacit insights among staff through interaction and observation of others’ approaches. |
 | 5 | As a student, I can view my own violation record (with guidance) and any assigned sanctions or lessons learned. | **Internalization** (Explicit → Tacit) | Helps students reflect on their actions, internalize consequences, and develop better behavioral understanding. |
 | 6 | As an admin/officer, I can assign sanctions, link violations to school policies, and generate official reports. | **Combination** (Explicit + Explicit) | Combines explicit violation data with school policies to create new, actionable knowledge and formal outputs. |
-| 7 | As a student or parent/guardian, I want to securely authenticate and log in to the system (using institutional email), so that I can access my personal dashboard, submit/view appeals, track status, upload evidence, and receive notifications while ensuring data privacy and role-based access.** | **Prerequisite / Cross-cutting** (Enables all SECI phases) | Foundational security layer required before any user can participate in SECI knowledge processes. Ensures only authorized users can externalize (submit appeals/evidence), combine (view reports), socialize (receive notifications), and internalize (reflect on records). Addresses the missing authentication flagged in US-06 review. |
+| 7 | As a student or parent/guardian, I want to securely authenticate and log in to the system (using institutional email), so that I can access my personal dashboard, submit/view appeals, track status, upload evidence, and receive notifications while ensuring data privacy and role-based access. | **Prerequisite / Cross-cutting** (Enables all SECI phases) | Foundational security layer required before any user can participate in SECI knowledge processes. Ensures only authorized users can externalize (submit appeals/evidence), combine (view reports), socialize (receive notifications), and internalize (reflect on records). Addresses the missing authentication flagged in US-06 review. |
 
 ## 4. Knowledge Architecture (Draft)
 - **Taxonomy**: Violation Type (Behavioral, Academic, Attendance, Others), Severity (Minor, Major), Contributing Factors.
