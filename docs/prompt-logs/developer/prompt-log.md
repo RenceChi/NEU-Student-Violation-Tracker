@@ -71,3 +71,93 @@ Discovered the KM Analyst had already committed a more detailed `ADR-README.md` 
 
 **What I learned:**
 Always check what teammates have already committed before creating new files. The existing ADR was more thorough because it was written with full team context.
+
+---
+
+## Entry 005
+**Date:** 2026-04-13
+**Task:** Task #52 — Configure Supabase Auth + create profiles table
+
+**Prompt given to AI:**
+Asked AI to walk me through creating a Supabase project and connecting it to the app.
+
+**What the AI produced:**
+Step-by-step guide for creating a Supabase project, getting API keys, and wiring them to the existing supabase.ts client via .env variables.
+
+**What I changed/rejected and why:**
+AI initially suggested hardcoding the Supabase URL and anon key directly in supabase.ts. Rejected this — used EXPO_PUBLIC_ environment variables instead to keep credentials out of the repo. Also caught that .env was not properly ignored by git and fixed the .gitignore before pasting real keys.
+
+**What I learned:**
+Always verify .gitignore covers .env before adding real credentials. The EXPO_PUBLIC_ prefix is required for Expo to expose env variables to the client bundle.
+
+---
+
+## Entry 006
+**Date:** 2026-04-13
+**Task:** Task #52 — Initial database schema
+
+**Prompt given to AI:**
+Asked AI to generate the database schema based on the user stories PDF.
+
+**What the AI produced:**
+An initial 2-table schema (profiles + violations). After reading the full user stories document, expanded it to 6 tables: profiles, violations, violation_types, sanctions, violation_sanctions, and appeals.
+
+**What I changed/rejected and why:**
+The first schema was too minimal — it didn't cover the violation types library, sanctions library, or appeals process which are all required by the user stories. Reviewed all 4 pages of the user stories document and pushed back on the AI to expand the schema accordingly.
+
+**What I learned:**
+Always read the full requirements before accepting a schema. A schema that looks complete for 1 user story may be missing 5 others.
+
+---
+
+## Entry 007
+**Date:** 2026-04-13
+**Task:** Task #54 — Build Login screen + role-based navigation guard
+
+**Prompt given to AI:**
+Asked AI to build the login screen based on the wireframe provided by the UX designer.
+
+**What the AI produced:**
+A login screen using emoji icons for the user, lock, and eye fields.
+
+**What I changed/rejected and why:**
+Rejected the emoji icons — they look unprofessional in a disciplinary management app. Replaced all emojis with @expo/vector-icons (Feather + Ionicons) to match the clean, minimal aesthetic of the wireframes. This is now the standard for all future screens.
+
+**What I learned:**
+AI defaults to emojis for quick icons. Always use a proper icon library for production-quality UI.
+
+---
+
+## Entry 008
+**Date:** 2026-04-13
+**Task:** Task #54 — Fix auth navigation bug
+
+**Prompt given to AI:**
+Reported that login button showed loading but did not navigate to the dashboard after successful authentication.
+
+**What the AI produced:**
+Multiple attempts using onAuthStateChange listener in the root layout and index.tsx. The listener approach kept failing because the component unmounted before the navigation fired.
+
+**What I changed/rejected and why:**
+Rejected the listener-only approach after 3 failed attempts. The fix was to handle navigation directly inside the login screen's handleLogin function — fetch the role immediately after signInWithPassword succeeds and call router.replace() right there. Same fix applied to logout in the officer dashboard. This is more predictable than relying on async listeners.
+
+**What I learned:**
+For navigation-critical events like login and logout, handle routing directly at the point of the action rather than relying on auth state listeners. Listeners are useful for session restoration on app open, but not reliable for immediate post-action navigation.
+
+---
+
+## Entry 009
+**Date:** 2026-04-13
+**Task:** Task #53 — Write RLS policies for all roles
+
+**Prompt given to AI:**
+Asked AI to generate RLS policies for all 6 tables based on the three roles: student, officer, and admin.
+
+**What the AI produced:**
+RLS policies covering SELECT, INSERT, and UPDATE permissions per role for all 6 tables.
+
+**What I changed/rejected and why:**
+Reviewed each policy against the user stories before running them. Confirmed that students should only see their own violations and appeals, officers should be able to read and write all violation data, and only admins should be able to modify the violation types and sanctions library. Saved the full SQL to docs/db/02_rls_policies.sql for team reference and version control.
+
+**What I learned:**
+RLS policies are the security layer of the entire app — getting them wrong means students could see other students' records. Always cross-check policies against the actual user stories, not just generic role assumptions.
