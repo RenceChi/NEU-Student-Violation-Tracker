@@ -1,20 +1,31 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
+type IconName = keyof typeof Ionicons.glyphMap;
+
+function TabIcon({ name, focused }: { name: IconName; focused: boolean }) {
+  return (
+    <Ionicons
+      name={focused ? name : (`${name}-outline` as IconName)}
+      size={22}
+      color={focused ? "#F59E0B" : "#94A3B8"}
+    />
+  );
+}
+
 export default function OfficerLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#fff",
-          borderTopColor: "#F1F5F9",
-          borderTopWidth: 1,
+          backgroundColor: "#1E293B",
+          borderTopWidth: 0,
           height: 64,
           paddingBottom: 10,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: "#1E293B",
+        tabBarActiveTintColor: "#F59E0B",
         tabBarInactiveTintColor: "#94A3B8",
         tabBarLabelStyle: {
           fontSize: 10,
@@ -23,52 +34,14 @@ export default function OfficerLayout() {
         },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: "Violations",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="document-text" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="library"
-        options={{
-          title: "Library",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name="library"
-              size={focused ? 26 : 22}
-              color={focused ? "#1E293B" : "#94A3B8"}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="record"
-        options={{
-          title: "Record",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add-circle" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="sanctions"
-        options={{
-          href: null, // hides sanctions tab since it's now inside library
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: "Home", tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} /> }} />
+      <Tabs.Screen name="history" options={{ title: "Violations", tabBarIcon: ({ focused }) => <TabIcon name="document-text" focused={focused} /> }} />
+      <Tabs.Screen name="library" options={{ title: "Library", tabBarIcon: ({ focused }) => <Ionicons name="library" size={focused ? 24 : 22} color={focused ? "#F59E0B" : "#94A3B8"} /> }} />
+      <Tabs.Screen name="reports" options={{ title: "Reports", tabBarIcon: ({ focused }) => <TabIcon name="bar-chart" focused={focused} /> }} />
+
+      {/* Hidden */}
+      <Tabs.Screen name="record" options={{ href: null }} />
+      <Tabs.Screen name="sanctions" options={{ href: null }} />
     </Tabs>
   );
 }

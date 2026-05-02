@@ -1,29 +1,31 @@
-import { Feather, Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { Feather, Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { supabase } from '../../src/lib/supabase';
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { supabase } from "../../src/lib/supabase";
 
 export default function LoginScreen() {
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   async function handleLogin() {
     if (!identifier || !password) {
-      Alert.alert('Error', 'Please fill in all fields.');
+      Alert.alert("Error", "Please fill in all fields.");
       return;
     }
     setLoading(true);
@@ -34,22 +36,21 @@ export default function LoginScreen() {
     });
 
     if (error) {
-      Alert.alert('Login Failed', error.message);
+      Alert.alert("Login Failed", error.message);
       setLoading(false);
       return;
     }
 
-    // Fetch role and navigate immediately
     const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
       .single();
 
-    if (profile?.role === 'student') {
-      router.replace('/(student)');
+    if (profile?.role === "student") {
+      router.replace("/(student)");
     } else {
-      router.replace('/(officer)');
+      router.replace("/(officer)");
     }
 
     setLoading(false);
@@ -57,126 +58,138 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: "#F8FAFC" }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={{ flex: 1, backgroundColor: '#f5f5f5', paddingHorizontal: 24 }}>
-
-          {/* Header */}
-          <View style={{ alignItems: 'center', paddingTop: 80, paddingBottom: 40 }}>
-            <View style={{
-              width: 80, height: 80, backgroundColor: '#ddd',
-              marginBottom: 16, justifyContent: 'center', alignItems: 'center'
-            }}>
-              <Ionicons name="school-outline" size={40} color="#999" />
-            </View>
-            <Text style={{ fontSize: 22, fontWeight: '900', textAlign: 'center', letterSpacing: 1 }}>
-              STUDENT VIOLATION{'\n'}SYSTEM
-            </Text>
-            <Text style={{ fontSize: 12, color: '#666', letterSpacing: 2, marginTop: 4 }}>
-              SCHOOL DISCIPLINARY MANAGEMENT
-            </Text>
+        {/* ── Top navy section ── */}
+        <View style={{
+          backgroundColor: "#1E293B",
+          paddingTop: insets.top + 48,
+          paddingBottom: 48,
+          alignItems: "center",
+        }}>
+          {/* Shield icon */}
+          <View style={{
+            width: 72, height: 72, borderRadius: 36,
+            backgroundColor: "rgba(255,255,255,0.12)",
+            alignItems: "center", justifyContent: "center",
+            marginBottom: 16,
+          }}>
+            <Ionicons name="shield-checkmark" size={36} color="#fff" />
           </View>
 
-          {/* Form */}
-          <View style={{ backgroundColor: '#fff', borderRadius: 8, padding: 24 }}>
-            <Text style={{ fontSize: 20, fontWeight: '700', marginBottom: 24 }}>Sign In</Text>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: "#fff", marginBottom: 4 }}>
+            EduGuard
+          </Text>
+          <Text style={{ fontSize: 11, fontWeight: "700", color: "#F59E0B", letterSpacing: 2 }}>
+            SCHOOL DISCIPLINARY MANAGEMENT
+          </Text>
+        </View>
 
-            {/* Username / ID */}
-            <Text style={{ fontSize: 11, fontWeight: '600', letterSpacing: 1, color: '#666', marginBottom: 6 }}>
-              USERNAME OR ID NUMBER
-            </Text>
-            <View style={{
-              flexDirection: 'row', alignItems: 'center',
-              borderWidth: 1, borderColor: '#ddd', borderRadius: 4,
-              paddingHorizontal: 12, marginBottom: 16
-            }}>
-              <Feather name="user" size={16} color="#999" style={{ marginRight: 8 }} />
-              <TextInput
-                placeholder="Enter identification"
-                value={identifier}
-                onChangeText={setIdentifier}
-                autoCapitalize="none"
-                style={{ flex: 1, paddingVertical: 14, fontSize: 15 }}
-              />
-            </View>
-
-            {/* Password */}
-            <Text style={{ fontSize: 11, fontWeight: '600', letterSpacing: 1, color: '#666', marginBottom: 6 }}>
-              PASSWORD
-            </Text>
-            <View style={{
-              flexDirection: 'row', alignItems: 'center',
-              borderWidth: 1, borderColor: '#ddd', borderRadius: 4,
-              paddingHorizontal: 12, marginBottom: 8
-            }}>
-              <Feather name="lock" size={16} color="#999" style={{ marginRight: 8 }} />
-              <TextInput
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                style={{ flex: 1, paddingVertical: 14, fontSize: 15 }}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Feather name={showPassword ? 'eye-off' : 'eye'} size={16} color="#999" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Forgot Password */}
-            <TouchableOpacity style={{ alignSelf: 'flex-end', marginBottom: 24 }}>
-              <Text style={{ fontSize: 12, color: '#666' }}>FORGOT PASSWORD?</Text>
-            </TouchableOpacity>
-
-            {/* Login Button */}
-            <TouchableOpacity
-              onPress={handleLogin}
-              disabled={loading}
-              style={{
-                backgroundColor: '#000', borderRadius: 4,
-                paddingVertical: 16, alignItems: 'center', marginBottom: 24
-              }}
-            >
-              {loading
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16, letterSpacing: 2 }}>LOGIN</Text>
-              }
-            </TouchableOpacity>
-
-            {/* OR CONTINUE AS */}
-            <Text style={{ textAlign: 'center', color: '#999', marginBottom: 16, fontSize: 13 }}>
-              OR CONTINUE AS
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity style={{
-                flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 4,
-                paddingVertical: 16, alignItems: 'center'
-              }}>
-                <Ionicons name="people-outline" size={24} color="#333" style={{ marginBottom: 4 }} />
-                <Text style={{ fontSize: 12, fontWeight: '600', textAlign: 'center' }}>
-                  STUDENT /{'\n'}PARENT
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={{
-                flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 4,
-                paddingVertical: 16, alignItems: 'center'
-              }}>
-                <Ionicons name="card-outline" size={24} color="#333" style={{ marginBottom: 4 }} />
-                <Text style={{ fontSize: 12, fontWeight: '600' }}>STAFF</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Footer */}
-          <Text style={{ textAlign: 'center', color: '#999', fontSize: 12, padding: 24 }}>
-            Having trouble? Contact your{'\n'}
-            <Text style={{ fontWeight: '700', color: '#666' }}>system administrator</Text>
+        {/* ── White form card ── */}
+        <View style={{
+          flex: 1,
+          backgroundColor: "#fff",
+          borderTopLeftRadius: 0,
+          borderTopRightRadius: 0,
+          paddingHorizontal: 28,
+          paddingTop: 32,
+          paddingBottom: 32,
+        }}>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: "#1E293B", marginBottom: 28 }}>
+            Sign In
           </Text>
 
+          {/* Username */}
+          <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748B", letterSpacing: 1, marginBottom: 8 }}>
+            USERNAME
+          </Text>
+          <View style={{
+            flexDirection: "row", alignItems: "center",
+            borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 8,
+            paddingHorizontal: 14, marginBottom: 20,
+          }}>
+            <Feather name="user" size={16} color="#F59E0B" style={{ marginRight: 10 }} />
+            <TextInput
+              placeholder="Enter your username"
+              value={identifier}
+              onChangeText={setIdentifier}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholderTextColor="#CBD5E1"
+              style={{ flex: 1, paddingVertical: 14, fontSize: 14, color: "#1E293B" }}
+            />
+          </View>
+
+          {/* Password */}
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748B", letterSpacing: 1 }}>
+              PASSWORD
+            </Text>
+            <TouchableOpacity>
+              <Text style={{ fontSize: 12, fontWeight: "600", color: "#F59E0B" }}>Forgot Password?</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{
+            flexDirection: "row", alignItems: "center",
+            borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 8,
+            paddingHorizontal: 14, marginBottom: 28,
+          }}>
+            <Feather name="lock" size={16} color="#F59E0B" style={{ marginRight: 10 }} />
+            <TextInput
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              placeholderTextColor="#CBD5E1"
+              style={{ flex: 1, paddingVertical: 14, fontSize: 14, color: "#1E293B" }}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+              <Feather name={showPassword ? "eye-off" : "eye"} size={16} color="#94A3B8" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Login button */}
+          <TouchableOpacity
+            onPress={handleLogin}
+            disabled={loading}
+            style={{
+              backgroundColor: "#1E293B",
+              borderRadius: 8,
+              paddingVertical: 16,
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "row",
+              gap: 8,
+              marginBottom: 24,
+            }}
+          >
+            {loading
+              ? <ActivityIndicator color="#fff" />
+              : <>
+                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Login</Text>
+                  <Feather name="log-in" size={16} color="#fff" />
+                </>
+            }
+          </TouchableOpacity>
+
+          {/* Footer note */}
+          <Text style={{ textAlign: "center", fontSize: 11, color: "#94A3B8", lineHeight: 16, marginBottom: 16 }}>
+            Access is restricted to authorized personnel. Your activity is{"\n"}being monitored for compliance.
+          </Text>
+
+          {/* Verified system badge */}
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#F59E0B" }} />
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748B", letterSpacing: 1 }}>
+              VERIFIED SYSTEM
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
