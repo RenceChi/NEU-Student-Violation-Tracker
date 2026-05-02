@@ -161,3 +161,111 @@ Reviewed each policy against the user stories before running them. Confirmed tha
 
 **What I learned:**
 RLS policies are the security layer of the entire app — getting them wrong means students could see other students' records. Always cross-check policies against the actual user stories, not just generic role assumptions.
+
+---
+
+## Entry 010
+**Date:** 2026-05-02
+**Task:** Task #55 — Build UI for managing violation types & sanctions (Story 2)
+
+**Prompt given to AI:**
+Asked AI to build the Violation Types and Sanctions CRUD screens based on the hi-fi wireframes, using Supabase, NativeWind v4, and the existing profiles/auth setup.
+
+**What the AI produced:**
+Two separate screens — `library.tsx` and `sanctions.tsx` — with full CRUD, role-gated add/edit/delete buttons, search and filter panels, and severity-colored cards.
+
+**What I changed/rejected and why:**
+The initial import used `useAuth` from a non-existent `AuthContext` file. Had to first create `src/lib/context/AuthContext.tsx` to provide session and profile.role across screens. Also discovered NativeWind v4 styles were not applying — traced the issue to a missing `metro.config.js` with `withNativeWind` and a missing `global.css` import in the root layout. Fixed both. Later merged sanctions into `library.tsx` as a tabbed interface to match the updated hi-fi design.
+
+**What I learned:**
+NativeWind v4 requires three things to work: correct babel preset, `metro.config.js` with `withNativeWind`, and `global.css` imported in the root layout. Missing any one of these causes silent styling failures. Always set up the full NativeWind pipeline before building UI.
+
+---
+
+## Entry 011
+**Date:** 2026-05-02
+**Task:** Task #55 — Fix RLS infinite recursion on profiles table
+
+**Prompt given to AI:**
+App threw "infinite recursion detected in policy for relation profiles" when opening the Library screen.
+
+**What the AI produced:**
+Identified that the "Officers can view all profiles" SELECT policy was querying the `profiles` table inside a policy on `profiles` itself, causing infinite recursion.
+
+**What I changed/rejected and why:**
+The first suggested fix used `auth.jwt()` to read the role claim — this didn't work because role is stored in the profiles table, not in the JWT. The second suggestion using `auth.users.raw_user_meta_data` also failed. The correct fix was to drop the recursive policy entirely and replace all SELECT policies on profiles with a single `auth.uid() IS NOT NULL` policy — any authenticated user can read profiles, which is safe given the data stored (name, role, section).
+
+**What I learned:**
+Never write an RLS policy on a table that queries the same table to check permissions — it will always recurse. For role-based access on the profiles table specifically, use JWT claims or a simpler auth.uid() check instead of a subquery back to profiles.
+
+---
+
+## Entry 012
+**Date:** 2026-05-02
+**Task:** Task #55 — Fix duplicate rows in sanctions and violation_types
+
+**Prompt given to AI:**
+Sanctions screen showed 14 items instead of 7. Asked AI to diagnose the cause.
+
+**What the AI produced:**
+First suggested the duplication was a React double-render issue and recommended an `active` guard in useEffect. Then identified the real cause: Supabase `ALL` policies overlapping with `SELECT` policies — admins matched both policies and received each row twice.
+
+**What I changed/rejected and why:**
+The `active` guard in useEffect was correct and kept — it prevents double-fetching in React 19 strict mode. But it didn't fix the duplication. The actual fix was splitting the `ALL` policy for admins into separate INSERT, UPDATE, and DELETE policies, removing the overlap with the existing `SELECT` policy. Also ran a dedup query on the sanctions table itself (`DISTINCT ON`) after discovering the seed data had been inserted twice.
+
+**What I learned:**
+Supabase `ALL` policies include SELECT, so combining them with a separate SELECT policy causes each row to be returned twice for users who match both. Always use operation-specific policies (INSERT/UPDATE/DELETE) rather than ALL when a SELECT policy already exists for the same table.
+
+---
+
+## Entry 013
+**Date:** 2026-05-02
+**Task:** Task #55 — Rebuild Library UI to match updated hi-fi design
+
+**Prompt given to AI:**
+UX designer provided an updated hi-fi showing a significantly different card layout — clean white cards with no left border, linked sanctions chips, three-dot menus, updated modals with segmented controls and a junction table for violation-sanction links.
+
+**What the AI produced:**
+Rebuilt `library.tsx` with the new card design, ViolationModal with Link Sanctions chip selector, SanctionModal with segmented Recommended For control, yellow FAB with label, and Supabase queries joining `violation_type_sanctions` for linked sanctions and `profiles` for updater name.
+
+**What I changed/rejected and why:**
+Required a new junction table (`violation_type_sanctions`) and two new columns (`updated_by` on both `violation_types` and `sanctions`). Wrote and ran the SQL before the AI rebuilt the UI. Also added `ActionSheetIOS` for the three-dot menu on iOS to match native patterns — kept `Alert` as the Android fallback since there's no native action sheet equivalent.
+
+**What I learned:**
+When the UX changes significantly mid-sprint, it's faster to identify the schema changes first and run them before touching the UI code. Trying to build UI against a missing table wastes time.
+
+---
+
+## Entry 014
+**Date:** 2026-05-02
+**Task:** Task #56, #57, #58 — Create student_violations table + Record Violation form
+
+**Prompt given to AI:**
+Asked AI to write the SQL for the `student_violations` table with foreign keys to `profiles` and `violation_types`, and to build the Record Violation screen matching the hi-fi wireframe.
+
+**What the AI produced:**
+SQL for `student_violations` with RLS policies, and a full `record.tsx` screen with student search (debounced), violation type picker with auto-assigned severity, date/time fields, location, description with character counter, evidence upload placeholder, animated success banner, and Supabase insert on submit.
+
+**What I changed/rejected and why:**
+The initial version placed `useRouter()` outside the component function, which is a React hooks violation. Moved it inside `RecordViolation()`. Also wired the back button to `router.back()` after noticing it had no `onPress` handler. The record screen is accessed via a FAB on the Violations tab rather than as a standalone tab — updated `_layout.tsx` to hide `record` from the nav and added `reports.tsx` as a placeholder for the Reports tab.
+
+**What I learned:**
+React hooks must always be called inside the component function — never at the module level. `useRouter`, `useAuth`, `useState` etc. called outside a component will crash at runtime, not compile time, making the error harder to catch.
+
+---
+
+## Entry 015
+**Date:** 2026-05-02
+**Task:** Task #54 — Redesign Login screen to match refined hi-fi (EduGuard branding)
+
+**Prompt given to AI:**
+UX designer provided a refined login screen hi-fi with dark navy top section, EduGuard branding, shield icon, amber "SCHOOL DISCIPLINARY MANAGEMENT" subtitle, and a clean white form card below.
+
+**What the AI produced:**
+Rebuilt `login.tsx` matching the hi-fi — navy header with shield icon and EduGuard/amber subtitle, white form card with amber-accented input icons, inline "Forgot Password?" link, Login button with arrow icon, compliance footer note, and amber "VERIFIED SYSTEM" badge.
+
+**What I changed/rejected and why:**
+Kept the existing auth logic (signInWithPassword + role fetch + router.replace) unchanged since it was already working correctly. Only the visual layer was replaced. Verified the import path for supabase.ts matched the existing file structure before replacing.
+
+**What I learned:**
+When redesigning a screen that already has working logic, isolate the visual changes from the logic changes. Replacing only the JSX/styles while keeping the handlers intact avoids reintroducing bugs that were already fixed.
