@@ -42,6 +42,7 @@ export default function OfficerLayout() {
       {/* Hidden */}
       <Tabs.Screen name="record" options={{ href: null }} />
       <Tabs.Screen name="sanctions" options={{ href: null }} />
+      <Tabs.Screen name="violation" options={{ href: null }} />
     </Tabs>
   );
 }
