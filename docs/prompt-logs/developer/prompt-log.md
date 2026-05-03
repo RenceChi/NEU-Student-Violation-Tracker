@@ -273,7 +273,6 @@ When redesigning a screen that already has working logic, isolate the visual cha
 ---
 
 ## Entry 016
-<<<<<<< HEAD
 **Date:** 2026-05-03
 **Task:** fix/ui-fixes — Build Officer Dashboard (index.tsx)
 
@@ -288,27 +287,10 @@ The initial version used `router.push()` for all Quick Action buttons including 
 
 **What I learned:**
 `router.push()` always creates a stack entry and adds a back arrow. For tab screens, use `router.navigate()` instead — it switches tabs without pushing to the stack.
-=======
-**Date:** 2026-05-02
-**Task:** Tasks #59, #60 — Violation History UI + Supabase fetch queries with RLS
-
-**Prompt given to AI:**
-Asked AI to build the Violation History screen based on the updated hi-fi wireframes, with role-aware views for officers and students, search, filter chips, stats row, and Supabase fetch queries respecting RLS.
-
-**What the AI produced:**
-A `history.tsx` screen with a FlatList, role-gated views (officer sees all violations with student names, student sees only their own with a profile card), stats row (Total/Open/Resolved), search bar, filter chips (All/By Date/By Type/By Severity), violation cards with severity and status badges, and a FAB + "Record New Violation" banner for officers.
-
-**What I changed/rejected and why:**
-The Supabase query used joined selects with aliases (`student:profiles!student_id`, `recorder:profiles!recorded_by`) which required casting the result as `any` due to TypeScript limitations with multi-join Supabase responses. Accepted this tradeoff — the data is correct at runtime even if TypeScript can't infer the shape. Also fixed the router.push pathname to use `as any` to bypass Expo Router's strict pathname type checking for dynamic routes.
-
-**What I learned:**
-When querying the same foreign table twice with different foreign key relationships (e.g. profiles via student_id and profiles via recorded_by), Supabase requires explicit hints using the `!column_name` syntax. TypeScript won't infer the shape of these joined results — casting to `any` is the pragmatic solution when the data structure is verified at runtime.
->>>>>>> origin/dev
 
 ---
 
 ## Entry 017
-<<<<<<< HEAD
 **Date:** 2026-05-03
 **Task:** fix/ui-fixes — Build Violation History screen (history.tsx)
 
@@ -323,27 +305,10 @@ Found a stale closure bug — `fetchViolations` was defined outside the `useEffe
 
 **What I learned:**
 Functions that close over React state inside `useEffect` capture the state value at the time of definition, not at the time of execution. When filters change rapidly, the stale closure fetches with the wrong values. Always pass current state explicitly as function arguments when the function is called from multiple places.
-=======
-**Date:** 2026-05-02
-**Task:** Tasks #61, #62 — Assign Sanctions UI + Supabase update function
-
-**Prompt given to AI:**
-Asked AI to build the Assign Sanction screen and Violation Detail screen matching the hi-fi, with sanction checklist, penalty period, notify student toggle, and Supabase insert into violation_sanctions + status update on student_violations.
-
-**What the AI produced:**
-`violation/[id].tsx` — full detail screen with all violation fields, evidence placeholders, assigned sanctions display, and role-gated action buttons (Assign Sanction for officers, Submit Appeal for students). `violation/assign-sanction.tsx` — sanction checklist with recommended-for badges, penalty period date inputs, notify student toggle, and handleAssign that inserts into violation_sanctions and updates violation status to resolved.
-
-**What I changed/rejected and why:**
-The violation subfolder required its own `_layout.tsx` with a Stack navigator — without it, Expo Router treated the violation screens as tabs and displayed them in the bottom nav bar as broken entries with down-arrow icons. Added `violation/_layout.tsx` with a headerless Stack and added `<Tabs.Screen name="violation" options={{ href: null }} />` to the officer layout to hide it from the tab bar. Also fixed the back button in `record.tsx` to use `router.replace("/(officer)/history")` instead of `router.back()` — the latter was navigating to the home dashboard because the record screen was pushed from the FAB rather than from within the history stack.
-
-**What I learned:**
-In Expo Router, any folder inside a tabs group is automatically treated as a tab unless explicitly hidden. Always add `href: null` for nested Stack routes inside a tabs layout. Additionally, `router.back()` follows the navigation stack — if a screen was opened from outside the expected flow, back() won't go where you expect. Use `router.replace()` with an explicit path for predictable navigation.
->>>>>>> origin/dev
 
 ---
 
 ## Entry 018
-<<<<<<< HEAD
 **Date:** 2026-05-03
 **Task:** fix/ui-fixes — Build Reports screen (report.tsx)
 
@@ -520,19 +485,3 @@ Kept as-is. Also updated the spinner background from white to `#1E293B` (navy) t
 
 **What I learned:**
 When a context already fetches and exposes data, consuming it directly is always better than making a second identical fetch in a child component. The redundant fetch was causing a brief flicker on app open because two async operations were racing to determine the route.
-=======
-**Date:** 2026-05-02
-**Task:** Tasks #59-62 — Fix nav bar and routing issues
-
-**Prompt given to AI:**
-Reported that the bottom nav bar showed broken tabs with down-arrow icons for the violation detail routes, and that the Reports tab showed a down-arrow instead of the bar chart icon.
-
-**What the AI produced:**
-Instructions to create `violation/_layout.tsx`, add `violation` to hidden tabs in the officer layout, and rename `report.tsx` to `reports.tsx` to match the tab screen name.
-
-**What I changed/rejected and why:**
-All three fixes were straightforward. The violation layout fix resolved the broken tabs immediately. The reports icon issue was purely a filename mismatch — Expo Router couldn't find `reports.tsx` because the file was named `report.tsx`, causing it to render a fallback tab with a down-arrow icon. Renamed the file and it resolved instantly.
-
-**What I learned:**
-Expo Router is filename-driven — the screen name in `<Tabs.Screen name="reports">` must exactly match the filename `reports.tsx`. A single character difference causes silent routing failures that are hard to diagnose without checking the file explorer carefully.
->>>>>>> origin/dev
