@@ -1,3 +1,4 @@
+import { useAuth } from "@/src/lib/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
@@ -14,6 +15,9 @@ function TabIcon({ name, focused }: { name: IconName; focused: boolean }) {
 }
 
 export default function OfficerLayout() {
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === "admin";
+
   return (
     <Tabs
       screenOptions={{
@@ -34,14 +38,45 @@ export default function OfficerLayout() {
         },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Home", tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} /> }} />
-      <Tabs.Screen name="history" options={{ title: "Violations", tabBarIcon: ({ focused }) => <TabIcon name="document-text" focused={focused} /> }} />
-      <Tabs.Screen name="library" options={{ title: "Library", tabBarIcon: ({ focused }) => <Ionicons name="library" size={focused ? 24 : 22} color={focused ? "#F59E0B" : "#94A3B8"} /> }} />
-      <Tabs.Screen name="reports" options={{ title: "Reports", tabBarIcon: ({ focused }) => <TabIcon name="bar-chart" focused={focused} /> }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Home",
+          tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: "Violations",
+          tabBarIcon: ({ focused }) => <TabIcon name="document-text" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="library"
+        options={{
+          title: "Library",
+          tabBarIcon: ({ focused }) => (
+            <Ionicons
+              name="library"
+              size={focused ? 24 : 22}
+              color={focused ? "#F59E0B" : "#94A3B8"}
+            />
+          ),
+        }}
+      />
+      {/* Reports — admin only. href: null hides it from the tab bar for officers */}
+      <Tabs.Screen
+        name="report"
+        options={{
+          title: "Reports",
+          tabBarIcon: ({ focused }) => <TabIcon name="bar-chart" focused={focused} />,
+          href: isAdmin ? undefined : null,
+        }}
+      />
 
-      {/* Hidden */}
+      {/* Hidden navigable screens — never shown in tab bar */}
       <Tabs.Screen name="record" options={{ href: null }} />
-      <Tabs.Screen name="sanctions" options={{ href: null }} />
     </Tabs>
   );
 }

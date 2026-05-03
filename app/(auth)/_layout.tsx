@@ -1,10 +1,8 @@
-import { AuthProvider } from "@/src/lib/context/AuthContext";
 import { Stack } from "expo-router";
 
-export default function RootLayout() {
-  return (
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-    </AuthProvider>
-  );
+// AuthProvider lives in the root app/_layout.tsx — do NOT wrap again here.
+// A second AuthProvider would create a separate context instance causing
+// useAuth() calls inside auth screens to see a different (empty) state.
+export default function AuthLayout() {
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
