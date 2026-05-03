@@ -40,8 +40,8 @@ interface ViolationType {
 
 const severityStyle = (s: Severity) => {
   switch (s) {
-    case "Minor":  return { bg: "#F59E0B", text: "#fff" };
-    case "Major":  return { bg: "#F97316", text: "#fff" };
+    case "Minor": return { bg: "#F59E0B", text: "#fff" };
+    case "Major": return { bg: "#F97316", text: "#fff" };
     case "Severe": return { bg: "#EF4444", text: "#fff" };
   }
 };
@@ -449,12 +449,17 @@ export default function RecordViolation() {
     <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
 
       {/* ── Header ── */}
+<<<<<<< HEAD
       <View style={{
         backgroundColor: "#1E293B",
         paddingTop: insets.top + 8, paddingBottom: 14, paddingHorizontal: 16,
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
       }}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+=======
+      <View style={{ backgroundColor: "#1E293B", paddingTop: insets.top + 8, paddingBottom: 14, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <TouchableOpacity onPress={() => router.replace("/(officer)/history")} hitSlop={8}>
+>>>>>>> origin/dev
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={{ color: "#fff", fontSize: 17, fontWeight: "700" }}>Record Violation</Text>
