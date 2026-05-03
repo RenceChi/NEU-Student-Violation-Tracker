@@ -77,11 +77,6 @@ export default function OfficerLayout() {
 
       {/* Hidden navigable screens — never shown in tab bar */}
       <Tabs.Screen name="record" options={{ href: null }} />
-<<<<<<< HEAD
-=======
-      <Tabs.Screen name="sanctions" options={{ href: null }} />
-      <Tabs.Screen name="violation" options={{ href: null }} />
->>>>>>> origin/dev
     </Tabs>
   );
 }
