@@ -273,53 +273,215 @@ When redesigning a screen that already has working logic, isolate the visual cha
 ---
 
 ## Entry 016
-**Date:** 2026-05-02
-**Task:** Tasks #59, #60 — Violation History UI + Supabase fetch queries with RLS
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Build Officer Dashboard (index.tsx)
 
 **Prompt given to AI:**
-Asked AI to build the Violation History screen based on the updated hi-fi wireframes, with role-aware views for officers and students, search, filter chips, stats row, and Supabase fetch queries respecting RLS.
+Asked AI to build a full Officer Dashboard to replace the bare placeholder that only had "Officer Dashboard" text and a logout button.
 
 **What the AI produced:**
-A `history.tsx` screen with a FlatList, role-gated views (officer sees all violations with student names, student sees only their own with a profile card), stats row (Total/Open/Resolved), search bar, filter chips (All/By Date/By Type/By Severity), violation cards with severity and status badges, and a FAB + "Record New Violation" banner for officers.
+A complete dashboard with EduGuard branding header, role label (ADMINISTRATOR / DISCIPLINE OFFICER), greeting, 4 stat cards (Total, Pending, This Week, Severe) pulled live from Supabase, Quick Actions row, and a Recent Violations list with severity dots, status badges, and time-ago labels.
 
 **What I changed/rejected and why:**
-The Supabase query used joined selects with aliases (`student:profiles!student_id`, `recorder:profiles!recorded_by`) which required casting the result as `any` due to TypeScript limitations with multi-join Supabase responses. Accepted this tradeoff — the data is correct at runtime even if TypeScript can't infer the shape. Also fixed the router.push pathname to use `as any` to bypass Expo Router's strict pathname type checking for dynamic routes.
+The initial version used `router.push()` for all Quick Action buttons including tab screens (History, Library, Reports). This caused a back arrow to appear on those screens because `push` creates a stack entry. Changed all tab screen navigation to `router.navigate()` and kept `router.push()` only for `/(officer)/record` which is a proper stack screen that should have a back button.
 
 **What I learned:**
-When querying the same foreign table twice with different foreign key relationships (e.g. profiles via student_id and profiles via recorded_by), Supabase requires explicit hints using the `!column_name` syntax. TypeScript won't infer the shape of these joined results — casting to `any` is the pragmatic solution when the data structure is verified at runtime.
+`router.push()` always creates a stack entry and adds a back arrow. For tab screens, use `router.navigate()` instead — it switches tabs without pushing to the stack.
 
 ---
 
 ## Entry 017
-**Date:** 2026-05-02
-**Task:** Tasks #61, #62 — Assign Sanctions UI + Supabase update function
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Build Violation History screen (history.tsx)
 
 **Prompt given to AI:**
-Asked AI to build the Assign Sanction screen and Violation Detail screen matching the hi-fi, with sanction checklist, penalty period, notify student toggle, and Supabase insert into violation_sanctions + status update on student_violations.
+Asked AI to build a full Violation History screen to replace the placeholder that only showed "Violation History" text.
 
 **What the AI produced:**
-`violation/[id].tsx` — full detail screen with all violation fields, evidence placeholders, assigned sanctions display, and role-gated action buttons (Assign Sanction for officers, Submit Appeal for students). `violation/assign-sanction.tsx` — sanction checklist with recommended-for badges, penalty period date inputs, notify student toggle, and handleAssign that inserts into violation_sanctions and updates violation status to resolved.
+A full list screen with expandable violation rows showing student info, violation type, severity stripe, status badges, incident details, recorder name, and location. Status filter pills (All/Pending/Resolved/Appealed) in the header, severity filter pills below search bar, pull-to-refresh, and a FAB to record new violations.
 
 **What I changed/rejected and why:**
-The violation subfolder required its own `_layout.tsx` with a Stack navigator — without it, Expo Router treated the violation screens as tabs and displayed them in the bottom nav bar as broken entries with down-arrow icons. Added `violation/_layout.tsx` with a headerless Stack and added `<Tabs.Screen name="violation" options={{ href: null }} />` to the officer layout to hide it from the tab bar. Also fixed the back button in `record.tsx` to use `router.replace("/(officer)/history")` instead of `router.back()` — the latter was navigating to the home dashboard because the record screen was pushed from the FAB rather than from within the history stack.
+Found a stale closure bug — `fetchViolations` was defined outside the `useEffect` and closed over `statusFilter` and `severityFilter` at definition time. Rapid filter changes would fetch with stale values. Fixed by rewriting the fetch as `doFetch(status, severity, silent)` that takes filters as arguments, and calling it explicitly from both `useEffect` and the `handleRefresh` function.
 
 **What I learned:**
-In Expo Router, any folder inside a tabs group is automatically treated as a tab unless explicitly hidden. Always add `href: null` for nested Stack routes inside a tabs layout. Additionally, `router.back()` follows the navigation stack — if a screen was opened from outside the expected flow, back() won't go where you expect. Use `router.replace()` with an explicit path for predictable navigation.
+Functions that close over React state inside `useEffect` capture the state value at the time of definition, not at the time of execution. When filters change rapidly, the stale closure fetches with the wrong values. Always pass current state explicitly as function arguments when the function is called from multiple places.
 
 ---
 
 ## Entry 018
-**Date:** 2026-05-02
-**Task:** Tasks #59-62 — Fix nav bar and routing issues
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Build Reports screen (report.tsx)
 
 **Prompt given to AI:**
-Reported that the bottom nav bar showed broken tabs with down-arrow icons for the violation detail routes, and that the Reports tab showed a down-arrow instead of the bar chart icon.
+Asked AI to build a Reports screen to replace the "Reports coming soon" placeholder.
 
 **What the AI produced:**
-Instructions to create `violation/_layout.tsx`, add `violation` to hidden tabs in the officer layout, and rename `report.tsx` to `reports.tsx` to match the tab screen name.
+A reports screen with 30/90/365 day range selector, summary stat cards (Total/Pending/Resolved), severity breakdown with percentage bars, top 5 violation types ranked by count, category breakdown, and monthly trend bars. All data computed client-side from a single Supabase query. Export button stubbed with an Alert for admin users only.
 
 **What I changed/rejected and why:**
-All three fixes were straightforward. The violation layout fix resolved the broken tabs immediately. The reports icon issue was purely a filename mismatch — Expo Router couldn't find `reports.tsx` because the file was named `report.tsx`, causing it to render a fallback tab with a down-arrow icon. Renamed the file and it resolved instantly.
+Kept as-is. All data queries matched the schema. The export button is intentionally stubbed — PDF export is a Sprint 2 task (#100).
 
 **What I learned:**
-Expo Router is filename-driven — the screen name in `<Tabs.Screen name="reports">` must exactly match the filename `reports.tsx`. A single character difference causes silent routing failures that are hard to diagnose without checking the file explorer carefully.
+Computing aggregations client-side from a single broad query is acceptable for small datasets. For larger production datasets, this should be moved to a Supabase database function or RPC to reduce data transfer.
+
+---
+
+## Entry 019
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Build Student Dashboard (student/index.tsx)
+
+**Prompt given to AI:**
+Asked AI to build a full Student Dashboard replacing the bare "Student Dashboard" placeholder.
+
+**What the AI produced:**
+A dashboard with student avatar (initials), 4 status counters (Total/Pending/Resolved/Appealed), expandable violation cards with sanction details, and a "Submit Appeal" button on pending violations.
+
+**What I changed/rejected and why:**
+Three fixes were needed after schema verification: (1) The sanctions query used `student_violation_sanctions` which doesn't exist — corrected to `violation_sanctions` with `violation_id` as the FK. (2) Added null guard on sanction render since the join can return null if a sanction is deleted. (3) The appeal submission originally just updated `student_violations.status` — corrected to first insert a row into the `appeals` table (with `violation_id`, `student_id`, `reason`, `status`) then update the violation status to `appealed`.
+
+**What I learned:**
+Always verify table and column names against the actual schema before writing Supabase queries. The join table name and FK column name both differed from what seemed intuitive, causing silent empty results rather than errors.
+
+---
+
+## Entry 020
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Fix officer layout bugs (_layout.tsx)
+
+**Prompt given to AI:**
+Asked AI to review and fix the officer tab layout which had a nav bug and a phantom tab.
+
+**What the AI produced:**
+Identified two bugs: (1) the Reports tab was registered as `name="reports"` but the file is `report.tsx` causing the tab to never resolve, (2) a `sanctions` tab was registered but no `sanctions.tsx` file exists, generating console warnings on every render.
+
+**What I changed/rejected and why:**
+Fixed both. Also added role-based tab hiding — Reports tab now uses `href: isAdmin ? undefined : null` so it's hidden from officers and only visible to admins. This required importing `useAuth` into the layout file. Also removed the phantom `sanctions` screen registration entirely.
+
+**What I learned:**
+Expo Router tab names must exactly match the filename. A tab registered with the wrong name silently fails to render without throwing an error. Always verify tab `name` props match actual filenames.
+
+---
+
+## Entry 021
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Fix AuthContext double fetch + add error state
+
+**Prompt given to AI:**
+Asked AI to fix a race condition in AuthContext where `getSession()` and `onAuthStateChange` both fired on startup, triggering two simultaneous profile fetches for the same user.
+
+**What the AI produced:**
+Added a `fetchedForId` ref to track which user ID was already fetched, preventing the `onAuthStateChange` listener from re-fetching if the profile was already loaded. Also added an `error: string | null` field to the context so screens can surface auth errors instead of silently failing.
+
+**What I changed/rejected and why:**
+Kept both changes. Also removed the double `AuthProvider` wrapping in `(auth)/_layout.tsx` — the root `app/_layout.tsx` already wraps everything in `AuthProvider`, so a second one inside `(auth)/` created a separate context instance where `useAuth()` would return empty state.
+
+**What I learned:**
+React context consumers always read from the nearest provider ancestor. A second `AuthProvider` inside a nested layout creates a fresh context instance, so `useAuth()` calls inside that subtree see empty state instead of the real session — a subtle bug that looks like an auth failure.
+
+---
+
+## Entry 022
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Fix login.tsx error handling + implement Forgot Password
+
+**Prompt given to AI:**
+Asked AI to fix login error handling (profile fetch failure left user stuck on spinner) and implement the Forgot Password button which was previously a no-op.
+
+**What the AI produced:**
+Added email format validation before attempting login, proper error handling when profile fetch fails (signs user out and shows actionable error), unknown role blocking, and a working Forgot Password using `supabase.auth.resetPasswordForEmail()` that reads the email already typed in the field.
+
+**What I changed/rejected and why:**
+Kept all changes. Added `autoComplete="email"` and `autoComplete="password"` props to the TextInputs for better UX on both platforms. Changed the login button background to `#475569` when disabled to give visual feedback that it's in a loading state.
+
+**What I learned:**
+`supabase.auth.resetPasswordForEmail()` requires a `redirectTo` URL — used `eduguard://reset-password` as the deep link scheme. This needs to be registered in `app.json` under `scheme` before the password reset flow will work end-to-end on device.
+
+---
+
+## Entry 023
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Fix RLS infinite recursion on profiles table
+
+**Prompt given to AI:**
+App threw "[AuthContext] Profile fetch failed: infinite recursion detected in policy for relation profiles" after applying new RLS policies.
+
+**What the AI produced:**
+Identified that the "Officers and admins can view all profiles" policy used a subquery `SELECT 1 FROM profiles WHERE id = auth.uid()` — which queries `profiles` while checking a policy on `profiles`, causing infinite recursion.
+
+**What I changed/rejected and why:**
+The fix was to create a `SECURITY DEFINER` function `get_my_role()` that reads the role from `profiles` while bypassing RLS (runs as postgres superuser). All policies that previously subqueried `profiles` were rewritten to call `get_my_role()` instead. Applied the same fix across all 6 tables that had the same pattern — `student_violations`, `sanctions`, `violation_types`, `violation_type_sanctions`, `appeals`, and `violation_sanctions`.
+
+**What I learned:**
+Any RLS policy on table X that contains `SELECT FROM X` will infinitely recurse. The correct pattern for role-based RLS on the same table being checked is a `SECURITY DEFINER` function that bypasses RLS when reading the role. This is the standard Supabase pattern for this use case.
+
+---
+
+## Entry 024
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Fix library.tsx canEdit bug
+
+**Prompt given to AI:**
+Reported that officer accounts could see Add/Edit/Delete buttons in the Library screen, which contradicts the roles document (only admins can manage the library).
+
+**What the AI produced:**
+Identified the bug — `canEdit` was set to `profile?.role === "admin" || profile?.role === "officer"` giving officers full edit access.
+
+**What I changed/rejected and why:**
+Changed to `const canEdit = profile?.role === "admin"` — one word removed. This cascades correctly through the entire file since `canEdit` is passed as a prop to `ViolationCard`, `SanctionCard`, the FAB, and the header add button.
+
+**What I learned:**
+Always cross-check role-gating logic against the roles document before committing. A single `||` that shouldn't be there gave officers admin-level access to the entire library.
+
+---
+
+## Entry 025
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Fix record.tsx date/time format bug + rebuild pickers
+
+**Prompt given to AI:**
+Two bugs: (1) `date_of_incident` was being inserted as "Jan 5, 2026" instead of "2026-01-05" causing DB type mismatch. (2) The date/time TextInputs were editable free text, allowing invalid values.
+
+**What the AI produced:**
+First attempt: replaced `TextInput` fields with `@react-native-community/datetimepicker`. This caused layout issues on iOS (inline rendering inside ScrollView) and a 1970 epoch bug with `display="inline"`.
+
+**What I changed/rejected and why:**
+After multiple failed attempts with `DateTimePicker` (inline rendering bug, modal clipping, 1970 date bug), rejected the third-party library entirely. Built custom `DatePickerModal` and `TimePickerModal` components using pure React Native `ScrollView` + `Modal` with drum/scroll wheel UI. These have no native module dependencies and work identically on iOS and Android. Date state stores `YYYY-MM-DD`, time state stores `HH:MM:SS` — both correct for the DB column types.
+
+**What I learned:**
+`@react-native-community/datetimepicker` has significant rendering differences between iOS and Android that require platform-specific workarounds. For cross-platform consistency in Expo Go, a custom pure-RN picker is more reliable than fighting native module quirks. Always verify DB column types before building form fields — `date` columns require `YYYY-MM-DD`, `time` columns require `HH:MM:SS`.
+
+---
+
+## Entry 026
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Full database audit and fixes
+
+**Prompt given to AI:**
+Asked AI to audit all RLS policies, indexes, constraints, and foreign keys across the entire database.
+
+**What the AI produced:**
+Identified and fixed: 8 RLS policy gaps (missing WITH CHECK clauses, wrong join table, broken officer ALL policy on appeals), 11 missing indexes on frequently queried columns, 7 missing CHECK constraints on enum columns, duplicate FK on `student_violations.violation_type_id`, missing FKs on `appeals.violation_id` and `violation_sanctions.violation_id`, and wrong delete rule on `violation_sanctions.sanction_id` (SET NULL → RESTRICT). Also identified and dropped the orphaned `violations` table (0 rows, 4 stale RLS policies).
+
+**What I changed/rejected and why:**
+Ran all fixes in sections — indexes first (zero risk), then constraints, then RLS, then FKs. Verified each section with a query before moving to the next. The `violations` table DROP was run separately after confirming 0 rows with `SELECT COUNT(*) FROM violations`.
+
+**What I learned:**
+Having policies defined on a table does not mean RLS is enabled — and having RLS enabled does not mean the policies are correct. Always audit WITH CHECK clauses on INSERT/UPDATE policies separately from USING clauses. Missing WITH CHECK means any authenticated user can bypass the restriction on write operations even if SELECT is properly locked down.
+
+---
+
+## Entry 027
+**Date:** 2026-05-03
+**Task:** fix/ui-fixes — Rebuild app/index.tsx to use AuthContext
+
+**Prompt given to AI:**
+Asked AI to fix the root `app/index.tsx` which was making a redundant Supabase `getSession()` + `profiles` query on every app open, duplicating work already done by `AuthContext`.
+
+**What the AI produced:**
+Rewrote `index.tsx` to use `useAuth()` hook directly — reads `session`, `profile`, and `loading` from context. Shows a navy/amber spinner while loading, redirects to login if no session, routes to student or officer layout based on `profile.role`. No Supabase calls in the file at all.
+
+**What I changed/rejected and why:**
+Kept as-is. Also updated the spinner background from white to `#1E293B` (navy) to match the EduGuard theme instead of showing a jarring white flash on app open.
+
+**What I learned:**
+When a context already fetches and exposes data, consuming it directly is always better than making a second identical fetch in a child component. The redundant fetch was causing a brief flicker on app open because two async operations were racing to determine the route.

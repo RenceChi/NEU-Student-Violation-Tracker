@@ -445,7 +445,7 @@ type Tab = "violations" | "sanctions";
 export default function LibraryScreen() {
   const { profile } = useAuth();
   const insets = useSafeAreaInsets();
-  const canEdit = profile?.role === "admin" || profile?.role === "officer";
+  const canEdit = profile?.role === "admin";
 
   const [activeTab, setActiveTab] = useState<Tab>("violations");
   const [search, setSearch] = useState("");
@@ -592,9 +592,6 @@ export default function LibraryScreen() {
       {/* ── Header ── */}
       <View style={{ backgroundColor: "#1E293B", paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <TouchableOpacity hitSlop={8}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
-          </TouchableOpacity>
           <Text style={{ color: "#fff", fontSize: 17, fontWeight: "700" }}>Manage Library</Text>
           {canEdit ? (
             <TouchableOpacity onPress={onFABPress}

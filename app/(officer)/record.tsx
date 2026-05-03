@@ -8,6 +8,7 @@ import {
   Alert,
   Animated,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   Text,
@@ -16,7 +17,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,11 +49,253 @@ const severityStyle = (s: Severity) => {
 const initials = (name: string) =>
   name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
 
-const formatDate = (d: Date) =>
-  d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+// Returns YYYY-MM-DD for DB date column
+const formatDate = (d: Date) => d.toISOString().split("T")[0];
 
-const formatTime = (d: Date) =>
-  d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+// Returns HH:MM:SS for DB time column
+const formatTime = (d: Date) => d.toTimeString().split(" ")[0];
+
+// Display-friendly for UI
+const displayDate = (iso: string) =>
+  new Date(iso + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+const displayTime = (hms: string) => {
+  const [h, m] = hms.split(":");
+  const hour = parseInt(h);
+  return `${hour % 12 || 12}:${m} ${hour < 12 ? "AM" : "PM"}`;
+};
+
+// ─── Drum Picker ──────────────────────────────────────────────────────────────
+
+const ITEM_H = 44;
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function Drum({
+  items,
+  selected,
+  onSelect,
+}: {
+  items: (string | number)[];
+  selected: number;
+  onSelect: (i: number) => void;
+}) {
+  const ref = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    setTimeout(() => {
+      ref.current?.scrollTo({ y: selected * ITEM_H, animated: false });
+    }, 50);
+  }, [selected]);
+
+  return (
+    <View style={{ flex: 1, height: ITEM_H * 5, overflow: "hidden" }}>
+      <View style={{
+        position: "absolute", top: ITEM_H * 2, left: 4, right: 4,
+        height: ITEM_H, backgroundColor: "#F1F5F9", borderRadius: 8, zIndex: 0,
+      }} />
+      <ScrollView
+        ref={ref}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={ITEM_H}
+        decelerationRate="fast"
+        contentContainerStyle={{ paddingVertical: ITEM_H * 2 }}
+        onMomentumScrollEnd={(e) => {
+          const i = Math.round(e.nativeEvent.contentOffset.y / ITEM_H);
+          onSelect(Math.max(0, Math.min(i, items.length - 1)));
+        }}
+      >
+        {items.map((item, i) => (
+          <TouchableOpacity
+            key={i}
+            onPress={() => {
+              ref.current?.scrollTo({ y: i * ITEM_H, animated: true });
+              onSelect(i);
+            }}
+            style={{ height: ITEM_H, alignItems: "center", justifyContent: "center" }}
+          >
+            <Text style={{
+              fontSize: 16,
+              fontWeight: i === selected ? "700" : "400",
+              color: i === selected ? "#1E293B" : "#94A3B8",
+            }}>
+              {item}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+// ─── Date Picker Modal ────────────────────────────────────────────────────────
+
+function DatePickerModal({
+  visible, value, onChange, onClose,
+}: {
+  visible: boolean;
+  value: string;
+  onChange: (v: string) => void;
+  onClose: () => void;
+}) {
+  const now = new Date();
+  const years = Array.from({ length: 10 }, (_, i) => now.getFullYear() - 9 + i).filter(y => y <= now.getFullYear());
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+
+  const parsed = value ? new Date(value + "T00:00:00") : now;
+  const [monthIdx, setMonthIdx] = useState(parsed.getMonth());
+  const [dayIdx,   setDayIdx]   = useState(parsed.getDate() - 1);
+  const [yearIdx,  setYearIdx]  = useState(Math.max(0, years.indexOf(parsed.getFullYear())));
+
+  useEffect(() => {
+    if (visible) {
+      const d = value ? new Date(value + "T00:00:00") : now;
+      setMonthIdx(d.getMonth());
+      setDayIdx(d.getDate() - 1);
+      setYearIdx(Math.max(0, years.indexOf(d.getFullYear())));
+    }
+  }, [visible]);
+
+  const handleDone = () => {
+    const y = years[yearIdx];
+    const m = monthIdx + 1;
+    const d = dayIdx + 1;
+    onChange(`${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
+    onClose();
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <TouchableOpacity
+        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }}
+        activeOpacity={1}
+        onPress={onClose}
+      />
+      <View style={{
+        backgroundColor: "#fff",
+        borderTopLeftRadius: 20, borderTopRightRadius: 20,
+        paddingBottom: 40,
+        position: "absolute", bottom: 0, left: 0, right: 0,
+      }}>
+        {/* Handle */}
+        <View style={{ alignItems: "center", paddingTop: 12, paddingBottom: 8 }}>
+          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: "#E2E8F0" }} />
+        </View>
+
+        {/* Header */}
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginBottom: 8 }}>
+          <TouchableOpacity onPress={onClose}>
+            <Text style={{ fontSize: 15, color: "#64748B", fontWeight: "600" }}>Cancel</Text>
+          </TouchableOpacity>
+          <Text style={{ fontSize: 15, fontWeight: "800", color: "#1E293B" }}>Select Date</Text>
+          <TouchableOpacity onPress={handleDone}>
+            <Text style={{ fontSize: 15, color: "#F59E0B", fontWeight: "700" }}>Done</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Column labels */}
+        <View style={{ flexDirection: "row", paddingHorizontal: 16, marginBottom: 4 }}>
+          {["Month", "Day", "Year"].map(l => (
+            <Text key={l} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: "700", color: "#94A3B8", letterSpacing: 1 }}>{l.toUpperCase()}</Text>
+          ))}
+        </View>
+
+        {/* Drums */}
+        <View style={{ flexDirection: "row", paddingHorizontal: 16 }}>
+          <Drum items={MONTHS} selected={monthIdx} onSelect={setMonthIdx} />
+          <Drum items={days}   selected={dayIdx}   onSelect={setDayIdx} />
+          <Drum items={years}  selected={yearIdx}  onSelect={setYearIdx} />
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ─── Time Picker Modal ────────────────────────────────────────────────────────
+
+function TimePickerModal({
+  visible, value, onChange, onClose,
+}: {
+  visible: boolean;
+  value: string;
+  onChange: (v: string) => void;
+  onClose: () => void;
+}) {
+  const parseT = (hms: string) => {
+    const [h, m] = (hms || "08:00:00").split(":").map(Number);
+    return { hourIdx: (h % 12 || 12) - 1, minIdx: m, period: h >= 12 ? 1 : 0 };
+  };
+
+  const init = parseT(value);
+  const [hourIdx, setHourIdx] = useState(init.hourIdx);
+  const [minIdx,  setMinIdx]  = useState(init.minIdx);
+  const [period,  setPeriod]  = useState(init.period);
+
+  useEffect(() => {
+    if (visible) {
+      const p = parseT(value);
+      setHourIdx(p.hourIdx);
+      setMinIdx(p.minIdx);
+      setPeriod(p.period);
+    }
+  }, [visible]);
+
+  const hours   = Array.from({ length: 12 }, (_, i) => i + 1);
+  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
+
+  const handleDone = () => {
+    let h = hourIdx + 1;
+    if (period === 1 && h !== 12) h += 12;
+    if (period === 0 && h === 12) h = 0;
+    onChange(`${String(h).padStart(2, "0")}:${String(minIdx).padStart(2, "0")}:00`);
+    onClose();
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <TouchableOpacity
+        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }}
+        activeOpacity={1}
+        onPress={onClose}
+      />
+      <View style={{
+        backgroundColor: "#fff",
+        borderTopLeftRadius: 20, borderTopRightRadius: 20,
+        paddingBottom: 40,
+        position: "absolute", bottom: 0, left: 0, right: 0,
+      }}>
+        {/* Handle */}
+        <View style={{ alignItems: "center", paddingTop: 12, paddingBottom: 8 }}>
+          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: "#E2E8F0" }} />
+        </View>
+
+        {/* Header */}
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginBottom: 8 }}>
+          <TouchableOpacity onPress={onClose}>
+            <Text style={{ fontSize: 15, color: "#64748B", fontWeight: "600" }}>Cancel</Text>
+          </TouchableOpacity>
+          <Text style={{ fontSize: 15, fontWeight: "800", color: "#1E293B" }}>Select Time</Text>
+          <TouchableOpacity onPress={handleDone}>
+            <Text style={{ fontSize: 15, color: "#F59E0B", fontWeight: "700" }}>Done</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Column labels */}
+        <View style={{ flexDirection: "row", paddingHorizontal: 16, marginBottom: 4 }}>
+          {["Hour", "Minute", ""].map((l, i) => (
+            <Text key={i} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: "700", color: "#94A3B8", letterSpacing: 1 }}>{l.toUpperCase()}</Text>
+          ))}
+        </View>
+
+        {/* Drums */}
+        <View style={{ flexDirection: "row", paddingHorizontal: 16 }}>
+          <Drum items={hours}        selected={hourIdx} onSelect={setHourIdx} />
+          <Drum items={minutes}      selected={minIdx}  onSelect={setMinIdx} />
+          <Drum items={["AM", "PM"]} selected={period}  onSelect={setPeriod} />
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 // ─── Section Label ────────────────────────────────────────────────────────────
 
@@ -69,38 +311,40 @@ function SectionLabel({ label }: { label: string }) {
 
 export default function RecordViolation() {
   const router = useRouter();
-
   const { profile } = useAuth();
   const insets = useSafeAreaInsets();
 
   // ── Student search ──
   const [selectedStudent, setSelectedStudent] = useState<StudentProfile | null>(null);
-  const [studentSearch, setStudentSearch] = useState("");
-  const [studentResults, setStudentResults] = useState<StudentProfile[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
+  const [studentSearch,   setStudentSearch]   = useState("");
+  const [studentResults,  setStudentResults]  = useState<StudentProfile[]>([]);
+  const [searchLoading,   setSearchLoading]   = useState(false);
 
   // ── Violation type ──
-  const [violationTypes, setViolationTypes] = useState<ViolationType[]>([]);
-  const [selectedViolation, setSelectedViolation] = useState<ViolationType | null>(null);
-  const [showViolationPicker, setShowViolationPicker] = useState(false);
+  const [violationTypes,     setViolationTypes]     = useState<ViolationType[]>([]);
+  const [selectedViolation,  setSelectedViolation]  = useState<ViolationType | null>(null);
+  const [showViolationPicker,setShowViolationPicker] = useState(false);
 
-  // ── Severity (can be overridden) ──
-  const [severity, setSeverity] = useState<Severity | null>(null);
+  // ── Severity ──
+  const [severity,   setSeverity]   = useState<Severity | null>(null);
   const [overriding, setOverriding] = useState(false);
 
+  // ── Date / Time ──
+  const [date,          setDate]          = useState(formatDate(new Date()));
+  const [time,          setTime]          = useState(formatTime(new Date()));
+  const [showDatePicker,setShowDatePicker] = useState(false);
+  const [showTimePicker,setShowTimePicker] = useState(false);
+
   // ── Other fields ──
-  const [date, setDate] = useState(formatDate(new Date()));
-  const [time, setTime] = useState(formatTime(new Date()));
-  const [location, setLocation] = useState("");
+  const [location,    setLocation]    = useState("");
   const [description, setDescription] = useState("");
   const MAX_DESC = 500;
 
   // ── UI state ──
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting,  setSubmitting]  = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const successOpacity = useRef(new Animated.Value(0)).current;
-
-  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchTimeout  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Load violation types ──
   useEffect(() => {
@@ -171,21 +415,21 @@ export default function RecordViolation() {
 
   // ── Submit ──
   const handleSubmit = async () => {
-    if (!selectedStudent) { Alert.alert("Validation", "Please select a student."); return; }
-    if (!selectedViolation) { Alert.alert("Validation", "Please select a violation type."); return; }
-    if (!description.trim()) { Alert.alert("Validation", "Please provide a description."); return; }
+    if (!selectedStudent)  { Alert.alert("Validation", "Please select a student."); return; }
+    if (!selectedViolation){ Alert.alert("Validation", "Please select a violation type."); return; }
+    if (!description.trim()){ Alert.alert("Validation", "Please provide a description."); return; }
 
     setSubmitting(true);
     const { error } = await supabase.from("student_violations").insert({
-      student_id: selectedStudent.id,
+      student_id:       selectedStudent.id,
       violation_type_id: selectedViolation.id,
-      recorded_by: profile?.id,
-      severity: severity ?? selectedViolation.default_severity,
+      recorded_by:      profile?.id,
+      severity:         severity ?? selectedViolation.default_severity,
       date_of_incident: date,
       time_of_incident: time,
-      location: location.trim() || null,
-      description: description.trim(),
-      status: "pending",
+      location:         location.trim() || null,
+      description:      description.trim(),
+      status:           "pending",
     });
     setSubmitting(false);
 
@@ -205,8 +449,12 @@ export default function RecordViolation() {
     <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
 
       {/* ── Header ── */}
-      <View style={{ backgroundColor: "#1E293B", paddingTop: insets.top + 8, paddingBottom: 14, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <TouchableOpacity onPress={() => router.replace("/(officer)/history")} hitSlop={8}>
+      <View style={{
+        backgroundColor: "#1E293B",
+        paddingTop: insets.top + 8, paddingBottom: 14, paddingHorizontal: 16,
+        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={{ color: "#fff", fontSize: 17, fontWeight: "700" }}>Record Violation</Text>
@@ -217,7 +465,12 @@ export default function RecordViolation() {
 
       {/* ── Success Banner ── */}
       {showSuccess && (
-        <Animated.View style={{ opacity: successOpacity, backgroundColor: "#1E293B", marginHorizontal: 16, marginTop: 12, borderRadius: 10, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 12 }}>
+        <Animated.View style={{
+          opacity: successOpacity, backgroundColor: "#1E293B",
+          marginHorizontal: 16, marginTop: 12, borderRadius: 10,
+          flexDirection: "row", alignItems: "center", gap: 10,
+          paddingHorizontal: 14, paddingVertical: 12,
+        }}>
           <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: "#F59E0B", alignItems: "center", justifyContent: "center" }}>
             <Ionicons name="checkmark" size={14} color="#fff" />
           </View>
@@ -236,7 +489,6 @@ export default function RecordViolation() {
           {/* ── Student ── */}
           <SectionLabel label="STUDENT" />
 
-          {/* Search */}
           {!selectedStudent && (
             <View style={{ marginBottom: 8 }}>
               <View style={{ backgroundColor: "#fff", borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 10, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 12 }}>
@@ -273,7 +525,6 @@ export default function RecordViolation() {
             </View>
           )}
 
-          {/* Selected student card */}
           {selectedStudent && (
             <View style={{ backgroundColor: "#fff", borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 10, flexDirection: "row", alignItems: "center", padding: 12, marginBottom: 20 }}>
               <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "#F59E0B", alignItems: "center", justifyContent: "center", marginRight: 12 }}>
@@ -297,7 +548,6 @@ export default function RecordViolation() {
           <SectionLabel label="VIOLATION DETAILS" />
           <Text style={{ fontSize: 11, fontWeight: "600", color: "#94A3B8", letterSpacing: 0.5, marginBottom: 6 }}>VIOLATION TYPE</Text>
 
-          {/* Violation picker */}
           <TouchableOpacity
             onPress={() => setShowViolationPicker(!showViolationPicker)}
             style={{ backgroundColor: "#fff", borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 14, marginBottom: 4 }}
@@ -324,7 +574,6 @@ export default function RecordViolation() {
             </View>
           )}
 
-          {/* Severity row */}
           {selectedViolation && sc && !overriding && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16, marginTop: 4 }}>
               <View style={{ backgroundColor: sc.bg, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 }}>
@@ -337,17 +586,16 @@ export default function RecordViolation() {
             </View>
           )}
 
-          {/* Override severity picker */}
           {overriding && (
             <View style={{ marginBottom: 16, marginTop: 4 }}>
               <Text style={{ fontSize: 11, color: "#94A3B8", marginBottom: 8 }}>Select severity override:</Text>
               <View style={{ flexDirection: "row", borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 8, overflow: "hidden" }}>
                 {(["Minor", "Major", "Severe"] as Severity[]).map((s) => {
                   const active = severity === s;
-                  const style = severityStyle(s);
+                  const st = severityStyle(s);
                   return (
                     <TouchableOpacity key={s} onPress={() => setSeverity(s)}
-                      style={{ flex: 1, paddingVertical: 11, alignItems: "center", backgroundColor: active ? style.bg : "#fff" }}>
+                      style={{ flex: 1, paddingVertical: 11, alignItems: "center", backgroundColor: active ? st.bg : "#fff" }}>
                       <Text style={{ fontSize: 13, fontWeight: "700", color: active ? "#fff" : "#94A3B8" }}>{s}</Text>
                     </TouchableOpacity>
                   );
@@ -360,27 +608,39 @@ export default function RecordViolation() {
           <View style={{ flexDirection: "row", gap: 10, marginBottom: 12 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 11, fontWeight: "600", color: "#94A3B8", letterSpacing: 0.5, marginBottom: 6 }}>DATE</Text>
-              <View style={{ backgroundColor: "#fff", borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 10, flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 12 }}>
-                <TextInput
-                  value={date}
-                  onChangeText={setDate}
-                  style={{ flex: 1, fontSize: 13, color: "#1E293B" }}
-                />
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(true)}
+                style={{ backgroundColor: "#fff", borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 10, flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 14 }}
+              >
+                <Text style={{ flex: 1, fontSize: 13, color: "#1E293B" }}>{displayDate(date)}</Text>
                 <Ionicons name="calendar-outline" size={16} color="#94A3B8" />
-              </View>
+              </TouchableOpacity>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 11, fontWeight: "600", color: "#94A3B8", letterSpacing: 0.5, marginBottom: 6 }}>TIME</Text>
-              <View style={{ backgroundColor: "#fff", borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 10, flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 12 }}>
-                <TextInput
-                  value={time}
-                  onChangeText={setTime}
-                  style={{ flex: 1, fontSize: 13, color: "#1E293B" }}
-                />
+              <TouchableOpacity
+                onPress={() => setShowTimePicker(true)}
+                style={{ backgroundColor: "#fff", borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 10, flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 14 }}
+              >
+                <Text style={{ flex: 1, fontSize: 13, color: "#1E293B" }}>{displayTime(time)}</Text>
                 <Ionicons name="time-outline" size={16} color="#94A3B8" />
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
+
+          {/* ── Pickers ── */}
+          <DatePickerModal
+            visible={showDatePicker}
+            value={date}
+            onChange={setDate}
+            onClose={() => setShowDatePicker(false)}
+          />
+          <TimePickerModal
+            visible={showTimePicker}
+            value={time}
+            onChange={setTime}
+            onClose={() => setShowTimePicker(false)}
+          />
 
           {/* ── Location ── */}
           <Text style={{ fontSize: 11, fontWeight: "600", color: "#94A3B8", letterSpacing: 0.5, marginBottom: 6 }}>LOCATION</Text>

@@ -1,53 +1,31 @@
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import { supabase } from '../src/lib/supabase';
+import { useAuth } from "@/src/lib/context/AuthContext";
+import { Redirect } from "expo-router";
+import { ActivityIndicator, View } from "react-native";
 
+// Root index reads from AuthContext which already fetched the session + profile
+// on mount — no redundant Supabase calls needed here.
 export default function Index() {
-  const router = useRouter();
+  const { session, profile, loading } = useAuth();
 
-  useEffect(() => {
-    const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.replace('/(auth)/login');
-        return;
-      }
-      await navigateByRole(session.user.id);
-    };
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (!session) {
-          router.replace('/(auth)/login');
-          return;
-        }
-        await navigateByRole(session.user.id);
-      }
+  // Still initialising — show spinner
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#1E293B" }}>
+        <ActivityIndicator size="large" color="#F59E0B" />
+      </View>
     );
-
-    init();
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  async function navigateByRole(userId: string) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single();
-
-    if (data?.role === 'student') {
-      router.replace('/(student)');
-    } else {
-      router.replace('/(officer)');
-    }
   }
 
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="large" color="#000" />
-    </View>
-  );
+  // Not logged in
+  if (!session) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  // Logged in — route by role
+  if (profile?.role === "student") {
+    return <Redirect href="/(student)" />;
+  }
+
+  // admin or officer both go to officer layout
+  return <Redirect href="/(officer)" />;
 }
