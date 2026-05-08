@@ -260,10 +260,155 @@ gate is not met, the blocker must be escalated the same day.
 
 ---
 
-## Entry #4 — *(Reserved — Sprint 2 Open)*
-
-> To be filed at the start of Week 5 when Sprint 1 closes
-> and the Sprint 2 milestone is activated.
+## Entry #4 — Sprint 1 Close & Build Sprint 2 Activation
+ 
+| Field | Details |
+|---|---|
+| **Date** | 05/08/2026 |
+| **Decision Made** | Formally close Build Sprint 1, acknowledge two pending deliverables as in-progress, and activate Build Sprint 2 (Weeks 5–6) |
+| **Status** | Decided |
+| **Who Was Consulted** | All 5 members (confirmed at Week 5 standup) |
+ 
+### Context
+Build Sprint 1 covered Weeks 3–5 and targeted 5 features across
+33 story points. By the end of Week 5, all 5 feature branches had
+been developed and the core application functionality was
+substantially complete. Two deliverables were still in progress
+at the time of this entry:
+ 
+| Deliverable | Owner | Status |
+|---|---|---|
+| TC-01 through TC-05 — Sprint 1 test cases + QA summary report | ZyCallado | In progress — expected same day |
+| KM Conceptual Report — full SECI framework documentation | Jax-rgb | In progress — expected same day |
+ 
+The team made the formal decision to proceed with closing Sprint 1
+and activating Sprint 2 rather than holding the entire sprint open
+for two documentation deliverables that do not block any Sprint 2
+development work. Both deliverables are expected to be committed
+to the `dev` branch the same day as this entry.
+ 
+---
+ 
+### Decision 4.1 — Formally Close Build Sprint 1
+ 
+**Sprint 1 completion status at close:**
+ 
+| Feature | Branch | Status |
+|---|---|---|
+| Authentication & role-based access | `feat/auth` | ✅ Merged to `dev` |
+| Manage violation types & sanctions library | `feat/violation-library` | ✅ Merged to `dev` |
+| Record student violation | `feat/violation-record` | ✅ Merged to `dev` |
+| View student violation history | `feat/violation-history` | ✅ Merged to `dev` |
+| Assign sanctions / penalties | `feat/sanctions` | ✅ Merged to `dev` |
+| Hi-fi wireframes — all 6 Sprint 1 screens | `docs/wireframes-hifi` | ✅ Committed (pwecii) |
+| SECI rationale — Sprint 1 features | `docs/km-sprint1` | ✅ Committed (Jax-rgb) |
+| KM Conceptual Report | `docs/km-sprint1` | 🔄 In progress — due today |
+| Test cases TC-01 to TC-05 + QA report | `docs/qa-sprint1` | 🔄 In progress — due today |
+ 
+**Notable discoveries during Sprint 1 development:**
+ 
+1. **"Save Draft" feature added to Record Violation screen** — The
+   UX/UI Designer (pwecii) included a Save Draft button on the
+   Record Violation screen (visible in the hi-fi wireframes) which
+   was not in the original US-03 acceptance criteria. The Dev
+   (prismic7) implemented this. The PM has flagged this for
+   ZyCallado to add a test case (TC-03 addendum) and for the
+   user story file US-03 to be updated with this AC.
+2. **"Submit Appeal" button visible in Sprint 1 UI** — The
+   Violation Details screen (hi-fi wireframe Image 9) already
+   renders a Submit Appeal button, which is a Sprint 2 feature
+   (US-07). The decision was made to render this button in a
+   disabled / "coming soon" state during Sprint 1 to avoid QA
+   flagging it as a broken feature before Sprint 2 builds it.
+3. **Audit trail and Case Progression timeline implemented** —
+   The library screens show a "Last edited by [name]" audit trail
+   and the Violation Details screen shows a Case Progression
+   timeline (Incident Reported → Investigation Started →
+   Sanction Proposed). These were not explicitly in the original
+   user stories but are strong KM artifacts. Jax-rgb has been
+   asked to document both in the KM Conceptual Report as
+   evidence of knowledge governance (Combination phase).
+---
+ 
+### Decision 4.2 — Activate Build Sprint 2
+ 
+**Decision:** Build Sprint 2 is formally activated effective
+today (05/08/2026) covering Weeks 5–6.
+ 
+| Feature | User Story | Story Points | SECI Phase | Branch |
+|---|---|---|---|---|
+| Generate violation reports | US-06 | 6 pts | Combination → Externalization | `feat/reports` |
+| Student violation appeal process | US-07 | 6 pts | Socialization | `feat/appeals` |
+ 
+**Total Sprint 2 Story Points: 12 pts**
+ 
+The "Sprint 2 — Do Not Start" labels have been removed from
+tickets US-06 and US-07 on the GitHub Projects board. Both
+tickets have been moved into the Sprint 2 milestone and assigned
+to prismic7 for development.
+ 
+**Build order for Sprint 2:**
+Reports (US-06) must be completed and its PR merged before
+Appeals (US-07) begins. This keeps QA testing sequential and
+prevents two unfinished features from conflicting on the `dev`
+branch simultaneously.
+ 
+---
+ 
+### Decision 4.3 — Sprint 2 Member Assignments
+ 
+| Member | GitHub | Sprint 2 Branch(es) | Deliverable |
+|---|---|---|---|
+| RenceChi | PM | `docs/decision-log`, `docs/standups` | Sprint 2 board management, PR approvals (feat/reports + feat/appeals), standup notes weeks 5–6, Decision Log entries #5–7 |
+| prismic7 | Dev | `feat/reports`, `feat/appeals` | Build Reports feature then Appeals feature sequentially |
+| Jax-rgb | KM Analyst | `docs/km-sprint2` | SECI rationale for US-06 + US-07, complete final KM Conceptual Report |
+| pwecii | UX/UI | `docs/wireframes-hifi` | Design HIFI-07 (Reports), HIFI-08 (Appeal form), HIFI-09 (Officer review screen) |
+| ZyCallado | QA Lead | `docs/qa-sprint2` | TC-06 (Reports), TC-07 (Appeals), full end-to-end regression all 7 features, final project QA report |
+ 
+---
+ 
+### Decision 4.4 — Feature Freeze Date Confirmed
+ 
+The feature freeze is scheduled for the **end of Week 6**. After
+that date, no new features or schema changes may be committed to
+`dev`. Week 7 is Polish Week (bug fixes + UI cleanup only) and
+Week 8 is Deployment + Oral Defense.
+ 
+Any feature not merged to `dev` by end of Week 6 is considered
+out of scope for the final submission and will be documented as
+a known limitation in the project's README and oral defense.
+ 
+---
+ 
+### Sprint 2 Gate Summary
+ 
+| Gate | Pass Condition | Owner |
+|---|---|---|
+| Start of Week 5 | All Sprint 1 documentation PRs (KM Report + QA report) committed. Sprint 2 milestone activated on board. | RenceChi |
+| End of Week 5 | `feat/reports` PR raised and under QA review. HIFI-07 to HIFI-09 exported by pwecii. TC-06 written by ZyCallado. | RenceChi |
+| End of Week 6 | All 7 features merged to `dev`. Full regression complete. All 9 hi-fi screens committed. KM Conceptual Report finalized. Feature freeze declared. | RenceChi |
+ 
+### Consequences
+ 
+**Easier because of this decision:**
+- Closing Sprint 1 now despite two in-progress docs keeps the
+  team's momentum and does not block prismic7 from starting
+  Sprint 2 development immediately.
+- The two in-progress deliverables (KM Report + QA report) are
+  documentation only — they do not affect the stability of the
+  `dev` branch or Sprint 2 code.
+- Sprint 2 scope is small (12 pts, 2 features) which gives the
+  team enough runway to also complete Polish Week and prepare
+  for oral defense within the remaining timeline.
+**Harder because of this decision:**
+- ZyCallado carries the heaviest Sprint 2 workload: TC-06,
+  TC-07, full 7-feature regression, and the final project QA
+  report — all within 2 weeks. PM must check in mid-Week 6,
+  not just at standup.
+- The "Save Draft" addition to US-03 and the Sprint 2 Appeal
+  button visible in Sprint 1 UI both need immediate follow-up
+  actions from ZyCallado (test cases) and the Dev (disabled
+  state) before Sprint 2 testing begins.
 
 ---
 

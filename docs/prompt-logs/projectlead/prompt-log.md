@@ -38,6 +38,26 @@ for Entries #4–7.
 Verified branch names match what is already in the repo before
 committing this file.
 
+## 04/26/2026 — Decision Log Entry #4
+
+**Task:** Generate Decision Log Entry #4 — Sprint 1 Close and
+Sprint 2 Activation.
+
+**Prompt summary:** PM confirmed Sprint 1 is functionally complete
+with all 5 features merged. Two docs (KM Conceptual Report +
+QA test cases) still in progress but expected same day. Asked
+AI to generate Entry #4 using all prior session context.
+
+**What AI produced:** Full Entry #4 with 4 sub-decisions covering
+Sprint 1 completion status, 3 UI discoveries from wireframe review,
+Sprint 2 activation with branch assignments, and feature freeze date.
+Appended directly to the existing decision-log.md file.
+
+**What I changed/decided:** Confirmed today's date (04/26/2026)
+as the official Sprint 1 close date. Flagged Save Draft AC update
+and disabled Appeal button as immediate follow-up actions for
+ZyCallado and prismic7 before Sprint 2 testing begins.
+
 ## May 2, 2026 — Build Sprint 2 Full Team Plan
 
 (Weeks 5–6) for all 5 team members.
@@ -58,3 +78,4 @@ branches can start.
 **What I learned:** Sprint 2 close = project feature freeze. Nothing 
 new gets built after Week 6 — Weeks 7–8 are polish, deployment, 
 and defense only.
+
