@@ -79,3 +79,21 @@ branches can start.
 new gets built after Week 6 — Weeks 7–8 are polish, deployment, 
 and defense only.
 
+## May 8, 2026 — Decision Log Entry #5
+
+**Task:** Generate Decision Log Entry #5 — Sprint 2 Close and
+Feature Freeze Declaration ahead of Tuesday 05/12 presentation.
+
+**Context:** Presentation date moved forward. PM personally
+verified all 7 features as functional. Formal QA regression
+by ZyCallado not completed due to compressed timeline.
+
+**What AI produced:** Full Entry #5 with 5 sub-decisions covering
+PM verification as acceptance gate, all 7 features confirmed
+complete (45 total story points), feature freeze declaration,
+compressed 5-day pre-presentation plan, and transparent
+acknowledgment of QA gap.
+
+**What I decided:** Accepted PM smoke testing as the Sprint 2
+close gate. Feature freeze declared 05/08/2026. All outstanding
+docs (KM Report, wireframes, QA docs, prompt logs) due today.

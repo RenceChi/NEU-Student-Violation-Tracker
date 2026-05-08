@@ -264,7 +264,7 @@ gate is not met, the blocker must be escalated the same day.
  
 | Field | Details |
 |---|---|
-| **Date** | 05/08/2026 |
+| **Date** | 04/26/2026 |
 | **Decision Made** | Formally close Build Sprint 1, acknowledge two pending deliverables as in-progress, and activate Build Sprint 2 (Weeks 5–6) |
 | **Status** | Decided |
 | **Who Was Consulted** | All 5 members (confirmed at Week 5 standup) |
@@ -412,10 +412,163 @@ a known limitation in the project's README and oral defense.
 
 ---
 
-## Entry #5 — *(Reserved — Sprint 2 Close)*
-
-> To be filed at the end of Week 6 when all 7 features are
-> merged and the feature freeze is declared.
+## Entry #5 — Build Sprint 2 Close & Feature Freeze Declaration
+ 
+| Field | Details |
+|---|---|
+| **Date** | 05/08/2026 |
+| **Decision Made** | Formally close Build Sprint 2, declare feature freeze, and confirm all 7 features as complete and demo-ready ahead of the presentation on Tuesday, May 12, 2026 |
+| **Status** | Decided |
+| **Who Was Consulted** | All 5 members (confirmed by PM at Week 6 close) |
+ 
+### Context
+Build Sprint 2 covered Weeks 5–6 and targeted 2 features across
+12 story points: Generate Violation Reports (US-06) and Student
+Violation Appeal Process (US-07). Both features were developed by
+prismic7 and have been verified as functional by the Project Manager
+(RenceChi) through direct hands-on testing of the application.
+ 
+The team's scheduled presentation date was moved forward to
+**Tuesday, May 12, 2026**, compressing the original Polish Week
+(Week 7) timeline. As a result, the following adjustments were made:
+ 
+| Adjustment | Reason |
+|---|---|
+| Feature freeze declared at end of Week 6 (today) | Presentation on Tuesday leaves no time for new feature work |
+| Formal QA regression by ZyCallado acknowledged as incomplete | Presentation timeline moved before full QA cycle could be executed |
+| PM's direct feature verification used as the Sprint 2 acceptance gate | PM tested all key flows personally and confirmed the app is demo-ready |
+| Polish and deployment activities compressed into the remaining days before Tuesday | Week 7 and Week 8 activities merged into a single pre-presentation window |
+ 
+---
+ 
+### Decision 5.1 — Accept PM Verification as Sprint 2 Close Gate
+ 
+Under normal sprint conditions, ZyCallado would complete a full
+end-to-end regression across all 7 features before Sprint 2 is
+closed. Due to the presentation date being moved to Tuesday,
+May 12, 2026, the team made the formal decision to accept the
+PM's (RenceChi) direct feature verification as the Sprint 2
+acceptance gate in place of the full QA regression.
+ 
+**What the PM verified:**
+ 
+| Feature | Verified By | Result |
+|---|---|---|
+| Authentication & role-based access | RenceChi (PM) | ✅ All 3 role logins working |
+| Manage violation types & sanctions library | RenceChi (PM) | ✅ CRUD functional, seed data present |
+| Record student violation | RenceChi (PM) | ✅ Form submits, severity auto-assigns |
+| View student violation history | RenceChi (PM) | ✅ Records display, filters working |
+| Assign sanctions / penalties | RenceChi (PM) | ✅ Status updates to Sanction Assigned |
+| Generate violation reports | RenceChi (PM) | ✅ Filters and export functional |
+| Student violation appeal process | RenceChi (PM) | ✅ Submission and status flow working |
+ 
+**Acknowledged limitation:** A formal test case execution
+(TC-01 through TC-07) and written QA summary report by ZyCallado
+was not completed before this entry. This is documented
+transparently as a known process gap caused by the compressed
+timeline, not a feature gap. The application features themselves
+are functional and demo-ready.
+ 
+---
+ 
+### Decision 5.2 — Confirm All 7 Features Complete
+ 
+All 7 planned features across Sprint 1 and Sprint 2 are confirmed
+complete and merged to the `dev` branch:
+ 
+| # | Feature | User Story | Story Points | SECI Phase | Status |
+|---|---|---|---|---|---|
+| 1 | Authentication & role-based access | — | ~5 pts | Socialization | ✅ Complete |
+| 2 | Manage violation types & sanctions library | US-05 | 8 pts | Combination | ✅ Complete |
+| 3 | Record student violation | US-01 | 8 pts | Externalization | ✅ Complete |
+| 4 | View student violation history | US-02 | 5 pts | Combination | ✅ Complete |
+| 5 | Assign sanctions / penalties | US-04 | 7 pts | Internalization | ✅ Complete |
+| 6 | Generate violation reports | US-03 | 6 pts | Combination | ✅ Complete |
+| 7 | Student violation appeal process | US-06 | 6 pts | Socialization | ✅ Complete |
+ 
+**Total story points delivered: 45 pts across Sprints 1 and 2**
+ 
+---
+ 
+### Decision 5.3 — Feature Freeze Declared
+ 
+**Feature freeze is declared effective 05/08/2026.**
+ 
+No new features, schema changes, or new branches may be merged
+to `dev` after this date. The only permitted commits from this
+point forward are:
+ 
+- Bug fixes for issues found during demo rehearsal
+- UI polish (loading states, empty states, error messages)
+- Documentation updates (README, prompt logs, standup notes)
+- Deployment configuration (Supabase prod environment, Expo build)
+Any feature not currently in the `dev` branch is considered
+out of scope for the final submission and will not be added
+before the presentation.
+ 
+---
+ 
+### Decision 5.4 — Compressed Pre-Presentation Plan
+ 
+Given the Tuesday presentation, the remaining days are allocated
+as follows:
+ 
+| Day | Focus | Owner |
+|---|---|---|
+| Today (05/08) | Commit KM Conceptual Report + QA docs. Decision Log #5 filed. | Jax-rgb, ZyCallado, RenceChi |
+| Saturday (05/09) | Bug fixes from demo rehearsal. UI polish pass. Dev finalizes inline comments. | prismic7 |
+| Sunday (05/10) | Demo rehearsal — all 3 roles tested live on device. Each member prepares oral defense section. | All members |
+| Monday (05/11) | Final Expo production build. Supabase prod environment confirmed. README finalized. | prismic7, RenceChi |
+| Tuesday (05/12) | Presentation + oral defense. | All members |
+ 
+---
+ 
+### Decision 5.5 — KM Deliverables Status at Sprint 2 Close
+ 
+| Deliverable | Owner | Status |
+|---|---|---|
+| KM Conceptual Report | Jax-rgb | 🔄 In progress — due today (05/08) |
+| SECI summary table — all 7 features | Jax-rgb | 🔄 In progress — due today (05/08) |
+| Hi-fi wireframes HIFI-07 to HIFI-09 | pwecii | 🔄 Due today (05/08) |
+| TC-01 to TC-07 test case documents | ZyCallado | 🔄 Due today (05/08) |
+| All prompt-log.md files updated | All members | 🔄 Due today (05/08) |
+ 
+All outstanding documentation must be committed to `dev` by
+end of day today (05/08/2026) so the repo is complete and
+clean before the presentation on Tuesday.
+ 
+---
+ 
+### Sprint 2 Gate — Final Outcome
+ 
+| Gate | Condition | Result |
+|---|---|---|
+| End of Week 5 | feat/reports PR raised and under review | ✅ Passed |
+| End of Week 6 | All 7 features merged to dev, feature freeze declared | ✅ Passed — declared today |
+| QA full regression | TC-01 through TC-07 executed by ZyCallado | ⚠️ Not completed — PM verification used as substitute due to compressed timeline |
+| KM Conceptual Report finalized | Committed to /docs/ by Jax-rgb | 🔄 Due today |
+ 
+### Consequences
+ 
+**Easier because of this decision:**
+- The team can focus entirely on demo rehearsal and oral defense
+  preparation for the remaining days rather than continuing
+  development work.
+- Feature freeze gives prismic7 a clear stop signal — no more
+  new branches, only polish and bug fixes.
+- All 7 features are functional and the app tells a complete
+  KMS story from Authentication (Socialization) through
+  Appeal Process (Socialization) — the full SECI cycle is
+  demonstrable end-to-end.
+**Harder because of this decision:**
+- The compressed timeline means ZyCallado's formal QA report
+  may not be complete before the presentation. If the instructor
+  asks about test coverage, the honest answer is that PM-level
+  smoke testing was performed and formal test case documentation
+  is in progress.
+- Any bugs found during Sunday's demo rehearsal must be fixed
+  Saturday — there is no buffer day. prismic7 must be available
+  Saturday for any critical fixes.
 
 ---
 
