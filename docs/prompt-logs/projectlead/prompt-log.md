@@ -19,6 +19,25 @@ deliverables during build phase — not just the discovery phase.
 if the Week 3 gate fails, the PM must escalate immediately rather
 than hoping Week 4 self-corrects.
 
+
+## April 18, 2026 — Decision Log Full Update
+
+**Task:** Update existing decision log with real team details and
+generate Entry #2 (SECI) and Entry #3 (Sprint 1 scope).
+
+**Prompt summary:** PM provided their existing Entry #1 with real
+team info (Group 3, 3BSCS-2, AY 2025-2026). Asked to update the
+log and create Entry #3 using the user stories PDF as reference.
+
+**What AI produced:** Complete decision-log.md with fixed Entry #1,
+new Entry #2 (SECI selection), full Entry #3 with 4 sub-decisions
+referencing all 6 original user stories, and reserved placeholders
+for Entries #4–7.
+
+**What I changed:** Confirmed dates match actual standup dates.
+Verified branch names match what is already in the repo before
+committing this file.
+
 ## May 2, 2026 — Build Sprint 2 Full Team Plan
 
 (Weeks 5–6) for all 5 team members.
