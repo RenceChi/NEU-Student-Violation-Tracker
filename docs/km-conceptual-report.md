@@ -58,6 +58,7 @@ This architecture ensures knowledge is not only stored but actively transformed 
 This version focuses on internal school knowledge conversion. Future enhancements could include a more comprehensive parent portal for stronger Internalization, AI-powered pattern detection in the violation library (Combination), improved appeal workflow with real-time notifications, and integration with external counseling or DepEd systems.
 
 ## 6. References (APA)
+
 Nonaka, I., & Takeuchi, H. (1995). *The knowledge-creating company: How Japanese companies create the dynamics of innovation*. Oxford University Press.
 
 Purnamawati, R. F., & Hidayat, R. (2025). Integrating the SECI Model into Knowledge Management Practices in Elementary Schools. *PPSDP International Journal of Education*, 4(2), 599–608.
