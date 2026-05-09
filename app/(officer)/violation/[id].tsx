@@ -43,8 +43,8 @@ interface ViolationDetail {
 
 const severityStyle = (s: Severity) => {
   switch (s) {
-    case "Minor":  return { bg: "#22C55E", text: "#fff" };
-    case "Major":  return { bg: "#F59E0B", text: "#fff" };
+    case "Minor": return { bg: "#22C55E", text: "#fff" };
+    case "Major": return { bg: "#F59E0B", text: "#fff" };
     case "Severe": return { bg: "#EF4444", text: "#fff" };
   }
 };
@@ -52,11 +52,11 @@ const severityStyle = (s: Severity) => {
 const statusStyle = (s: string) => {
   switch (s) {
     case "pending":
-    case "open":       return { bg: "#FEF3C7", text: "#B45309", label: "Open"       };
-    case "resolved":   return { bg: "#DCFCE7", text: "#15803D", label: "Resolved"   };
-    case "appealed":   return { bg: "#DBEAFE", text: "#1E40AF", label: "Appealed"   };
+    case "open": return { bg: "#FEF3C7", text: "#B45309", label: "Open" };
+    case "resolved": return { bg: "#DCFCE7", text: "#15803D", label: "Resolved" };
+    case "appealed": return { bg: "#DBEAFE", text: "#1E40AF", label: "Appealed" };
     case "overturned": return { bg: "#F3E8FF", text: "#6B21A8", label: "Overturned" };
-    default:           return { bg: "#F1F5F9", text: "#475569", label: "Unknown"    };
+    default: return { bg: "#F1F5F9", text: "#475569", label: "Unknown" };
   }
 };
 
@@ -85,6 +85,7 @@ export default function ViolationDetailScreen() {
 
   const [violation, setViolation] = useState<ViolationDetail | null>(null);
   const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
     let active = true;
@@ -138,7 +139,13 @@ export default function ViolationDetailScreen() {
 
       {/* ── Header ── */}
       <View style={{ backgroundColor: "#1E293B", paddingTop: insets.top + 8, paddingBottom: 14, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+        <TouchableOpacity
+          // ✅ router.dismiss() pops the entire violation stack back to the tab
+          onPress={() => {
+            router.dismiss();
+          }}
+          hitSlop={8}
+        >
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={{ color: "#fff", fontSize: 17, fontWeight: "700" }}>Violation Details</Text>

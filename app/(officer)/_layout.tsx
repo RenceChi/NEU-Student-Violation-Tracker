@@ -65,7 +65,7 @@ export default function OfficerLayout() {
           ),
         }}
       />
-      {/* Reports — admin only. href: null hides it from the tab bar for officers */}
+      {/* Reports — admin only */}
       <Tabs.Screen
         name="report"
         options={{
@@ -74,7 +74,6 @@ export default function OfficerLayout() {
           href: isAdmin ? undefined : null,
         }}
       />
-
       <Tabs.Screen
         name="appeals"
         options={{
@@ -83,11 +82,11 @@ export default function OfficerLayout() {
         }}
       />
 
-      {/* Hidden navigable screens — never shown in tab bar */}
+      {/* ✅ Hidden from tab bar — navigated via router.push from history.tsx */}
       <Tabs.Screen name="record" options={{ href: null }} />
+
+      {/* ✅ Hide the entire violation nested group from the tab bar */}
       <Tabs.Screen name="violation" options={{ href: null }} />
     </Tabs>
-
-
   );
 }
