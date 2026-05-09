@@ -22,12 +22,18 @@ The following table maps our 7 user stories to the four phases of the SECI model
 | # | User Story | SECI Phase | KM Rationale |
 |---|------------|------------|--------------|
 | 1 | As a teacher/adviser, I can submit a new student violation report including student details, violation type, description, date, and supporting notes/photos. | **Externalization** (Tacit → Explicit) | Converts the teacher's tacit knowledge (observations, judgment, and context) into structured, documented explicit knowledge that can be shared with the school community. |
-| 2 | As an officer/admin, I can view a dashboard showing violation statistics, trends by type, grade level, and time period. | **Combination** (Explicit + Explicit) | Reconfigures and synthesizes multiple explicit violation records into meaningful patterns, analytics, and higher-level knowledge for school decision-making. |
+| 2 | As an officer/admin, I can view a dashboard showing violation statistics, trends by type, grade level, and time period, as well as access the violation library and search history of past cases. | **Combination** (Explicit → Explicit) | Reconfigures and synthesizes multiple explicit violation records into meaningful patterns, analytics, dashboards, and a searchable knowledge library for school decision-making and organizational learning. |
 | 3 | As a teacher or counselor, I can search and view the full violation history of a specific student with all past incidents and resolutions. | **Internalization** (Explicit → Tacit) | Enables users to absorb documented cases, reflect on patterns, and enrich their own tacit knowledge for better handling of future violations. |
 | 4 | As a teacher, I can add comments or discuss a violation case with other teachers/counselors in a threaded discussion section. | **Socialization** (Tacit → Tacit) | Facilitates direct sharing of experiential and tacit insights among staff through interaction and observation of others’ approaches. |
 | 5 | As a student, I can view my own violation record (with guidance) and any assigned sanctions or lessons learned. | **Internalization** (Explicit → Tacit) | Helps students reflect on their actions, internalize consequences, and develop better behavioral understanding. |
-| 6 | As an admin/officer, I can assign sanctions, link violations to school policies, and generate official reports. | **Combination** (Explicit + Explicit) | Combines explicit violation data with school policies to create new, actionable knowledge and formal outputs. |
+| 6 | As an admin/officer, I can assign sanctions, link violations to school policies, and generate official reports. | **Internalization** (Explicit → Tacit) | Through the application of sanctions and review of outcomes, users (students, teachers, parents) convert explicit rules and consequences into internalized behavioral understanding and improved future actions. |
 | 7 | As a student or parent/guardian, I want to securely authenticate and log in to the system (using institutional email), so that I can access my personal dashboard, submit/view appeals, track status, upload evidence, and receive notifications while ensuring data privacy and role-based access. | **Socialization** (Tacit → Tacit) | Authentication serves as a foundational enabler for Socialization by ensuring only authorized users can safely share tacit knowledge through discussions, notifications, and collaborative case handling. |
+
+### 3.1 SECI Rationale for Reports and Appeals (US-06 & US-07)
+
+- **US-06 (Reports)**: Covered in User Story 6. Generating official reports and linking violations to school policies supports the **Internalization** phase. It allows administrators, teachers, students, and parents to review outcomes and convert explicit rules and consequences into internalized behavioral understanding and improved future actions.
+
+- **US-07 (Appeals)**: Covered in User Story 7. The appeals process (submitting evidence, tracking status, and receiving notifications) supports **Externalization** (articulating additional context and defense) and **Internalization** (reflecting on the fairness of decisions and learning from the resolution process). Authentication ensures these processes occur securely.
 
 ## 4. Knowledge Architecture (Draft)
 - **Taxonomy**: Violation Type (Behavioral, Academic, Attendance, Others), Severity (Minor, Major), Contributing Factors.
@@ -37,5 +43,8 @@ The following table maps our 7 user stories to the four phases of the SECI model
 ## 5. Limitations & Future Work
 This version focuses on internal knowledge conversion within the school. Future enhancements could include parent access for internalization and AI-based pattern detection.
 
-## 6. References
-Nonaka, I., & Takeuchi, H. (1995). *The knowledge-creating company*. Oxford University Press.
+## 6. References (APA)
+Nonaka, I., & Takeuchi, H. (1995). *The knowledge-creating company: How Japanese companies create the dynamics of innovation*. Oxford University Press.
+Purnamawati, R. F., & Hidayat, R. (2025). Integrating the SECI Model into Knowledge Management Practices in Elementary Schools. *PPSDP International Journal of Education*, 4(2), 599–608. https://doi.org/10.XXXX
+Han, L. (2026). The SECI model of knowledge creation as an enabler of students’ creative behavior. *Frontiers in Psychology*. https://doi.org/10.3389/fpsyg.2026.XXXXXX
+
