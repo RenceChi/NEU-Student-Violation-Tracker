@@ -15,9 +15,9 @@ The SECI model developed by Ikujiro Nonaka and Hirotaka Takeuchi (1995) describe
 
 SECI was chosen over Communities of Practice because it provides a clear, structured process for turning individual teacher insights into school-wide organizational knowledge. It fits perfectly with our goal of moving from simple violation logging to continuous learning and prevention.
 
-### 3. Framework-to-App Mapping (7 User Stories)
+## 3. Framework-to-App Mapping (7 User Stories)
 
-The following table maps our 7 user stories to the four phases of the SECI model. This mapping demonstrates how the NEU Student Violation Tracker functions as a genuine Knowledge Management system rather than a simple logging tool. Authentication has been added as User Story 7 to resolve the HIGH risk identified in the review (missing Student/Parent authentication for US-06 Appeal Process).
+The following table maps our 7 key user stories to the SECI model. This demonstrates how the NEU Student Violation Tracker functions as a genuine Knowledge Management system that enables continuous knowledge creation through the SECI spiral.
 
 | # | User Story | SECI Phase | KM Rationale |
 |---|------------|------------|--------------|
@@ -41,9 +41,10 @@ The following table maps our 7 user stories to the four phases of the SECI model
 - **Retrieval**: Search by keyword, filter by tags, and "similar cases" feature.
 
 ## 5. Limitations & Future Work
-This version focuses on internal knowledge conversion within the school. Future enhancements could include parent access for internalization and AI-based pattern detection.
+This version focuses on internal school knowledge conversion. Future enhancements could include a more comprehensive parent portal for stronger Internalization, AI-powered pattern detection in the violation library (Combination), and improved appeal workflow with real-time notifications.
 
 ## 6. References (APA)
+
 Nonaka, I., & Takeuchi, H. (1995). *The knowledge-creating company: How Japanese companies create the dynamics of innovation*. Oxford University Press.
 Purnamawati, R. F., & Hidayat, R. (2025). Integrating the SECI Model into Knowledge Management Practices in Elementary Schools. *PPSDP International Journal of Education*, 4(2), 599–608. https://doi.org/10.XXXX
 Han, L. (2026). The SECI model of knowledge creation as an enabler of students’ creative behavior. *Frontiers in Psychology*. https://doi.org/10.3389/fpsyg.2026.XXXXXX
