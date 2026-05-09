@@ -18,16 +18,16 @@ import { supabase } from "@/src/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 // ─── Options ──────────────────────────────────────────────────────────────────
@@ -209,18 +209,6 @@ export default function SubmitAppealModal({
 
     if (appealError) {
       Alert.alert("Error", appealError.message);
-      setSubmitting(false);
-      return;
-    }
-
-    // Update violation status to appealed
-    const { error: statusError } = await supabase
-      .from("student_violations")
-      .update({ status: "appealed" })
-      .eq("id", violationId);
-
-    if (statusError) {
-      Alert.alert("Error", statusError.message);
       setSubmitting(false);
       return;
     }

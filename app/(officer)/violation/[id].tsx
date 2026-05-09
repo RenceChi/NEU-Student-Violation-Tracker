@@ -4,12 +4,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -49,11 +49,14 @@ const severityStyle = (s: Severity) => {
   }
 };
 
-const statusStyle = (s: Status) => {
+const statusStyle = (s: string) => {
   switch (s) {
     case "pending":
-    case "open":    return { bg: "#FEF3C7", text: "#B45309", label: "Open" };
-    case "resolved":return { bg: "#DCFCE7", text: "#15803D", label: "Resolved" };
+    case "open":       return { bg: "#FEF3C7", text: "#B45309", label: "Open"       };
+    case "resolved":   return { bg: "#DCFCE7", text: "#15803D", label: "Resolved"   };
+    case "appealed":   return { bg: "#DBEAFE", text: "#1E40AF", label: "Appealed"   };
+    case "overturned": return { bg: "#F3E8FF", text: "#6B21A8", label: "Overturned" };
+    default:           return { bg: "#F1F5F9", text: "#475569", label: "Unknown"    };
   }
 };
 

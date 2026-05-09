@@ -4,11 +4,11 @@ import { supabase } from "@/src/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -24,6 +24,7 @@ interface MyViolation {
   description: string;
   violation_type: { name: string; category: string } | null;
   sanctions: { sanction: { name: string; duration: string } | null }[];
+  hasAppeal?: boolean;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -38,10 +39,11 @@ const severityStyle = (s: Severity) => {
 
 const statusStyle = (s: string) => {
   switch (s) {
-    case "resolved": return { bg: "#D1FAE5", text: "#065F46", icon: "checkmark-circle" as const };
-    case "pending":  return { bg: "#FEF3C7", text: "#92400E", icon: "time" as const };
-    case "appealed": return { bg: "#DBEAFE", text: "#1E40AF", icon: "chatbubble-ellipses" as const };
-    default:         return { bg: "#F1F5F9", text: "#475569", icon: "ellipsis-horizontal" as const };
+    case "resolved":   return { bg: "#D1FAE5", text: "#065F46", icon: "checkmark-circle"  as const };
+    case "pending":    return { bg: "#FEF3C7", text: "#92400E", icon: "time"               as const };
+    case "appealed":   return { bg: "#DBEAFE", text: "#1E40AF", icon: "chatbubble-ellipses" as const };
+    case "overturned": return { bg: "#F3E8FF", text: "#6B21A8", icon: "refresh-circle"     as const };
+    default:           return { bg: "#F1F5F9", text: "#475569", icon: "ellipsis-horizontal" as const };
   }
 };
 
@@ -62,7 +64,9 @@ function ViolationCard({
   const sv = severityStyle(item.severity);
   const st = statusStyle(item.status);
   const [expanded, setExpanded] = useState(false);
-  const canAppeal = item.status === "pending";
+
+  // Appeal only on resolved violations that don't already have an appeal
+  const canAppeal = item.status === "resolved" && !item.hasAppeal;
 
   return (
     <View style={{
@@ -76,7 +80,6 @@ function ViolationCard({
       elevation: 2,
       overflow: "hidden",
     }}>
-      {/* Severity bar */}
       <View style={{ height: 4, backgroundColor: sv.dot }} />
 
       <TouchableOpacity
@@ -151,6 +154,33 @@ function ViolationCard({
                 <Text style={{ fontSize: 13, fontWeight: "700", color: "#1E40AF" }}>Submit Appeal</Text>
               </TouchableOpacity>
             )}
+
+            {/* Already appealed notice */}
+            {item.status === "resolved" && item.hasAppeal && (
+              <View style={{
+                flexDirection: "row", alignItems: "center", gap: 8,
+                backgroundColor: "#EFF6FF", borderRadius: 10, padding: 12, marginTop: 4,
+              }}>
+                <Ionicons name="information-circle-outline" size={16} color="#1E40AF" />
+                <Text style={{ fontSize: 12, color: "#1E40AF", flex: 1 }}>
+                  You have already submitted an appeal for this violation.
+                </Text>
+              </View>
+            )}
+
+            {/* Overturned notice */}
+            {item.status === "overturned" && (
+              <View style={{
+                flexDirection: "row", alignItems: "center", gap: 8,
+                backgroundColor: "#F3E8FF", borderRadius: 10, padding: 12, marginTop: 4,
+                borderWidth: 1, borderColor: "#E9D5FF",
+              }}>
+                <Ionicons name="refresh-circle-outline" size={16} color="#6B21A8" />
+                <Text style={{ fontSize: 12, color: "#6B21A8", flex: 1 }}>
+                  Your appeal was approved. This violation has been overturned.
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </TouchableOpacity>
@@ -164,26 +194,40 @@ export default function StudentViolations() {
   const insets      = useSafeAreaInsets();
   const { profile } = useAuth();
 
-  const [violations,  setViolations]  = useState<MyViolation[]>([]);
-  const [loading,     setLoading]     = useState(true);
-  const [refreshing,  setRefreshing]  = useState(false);
-  const [appealTarget,setAppealTarget]= useState<MyViolation | null>(null);
+  const [violations,   setViolations]   = useState<MyViolation[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [refreshing,   setRefreshing]   = useState(false);
+  const [appealTarget, setAppealTarget] = useState<MyViolation | null>(null);
 
   const fetchViolations = async (silent = false) => {
     if (!profile?.id) return;
     silent ? setRefreshing(true) : setLoading(true);
 
-    const { data, error } = await supabase
-      .from("student_violations")
-      .select(`
-        id, severity, date_of_incident, status, description,
-        violation_type:violation_type_id(name, category),
-        sanctions:violation_sanctions(sanction:sanction_id(name, duration))
-      `)
-      .eq("student_id", profile.id)
-      .order("date_of_incident", { ascending: false });
+    const [violationsRes, appealsRes] = await Promise.all([
+      supabase
+        .from("student_violations")
+        .select(`
+          id, severity, date_of_incident, status, description,
+          violation_type:violation_type_id(name, category),
+          sanctions:violation_sanctions(sanction:sanction_id(name, duration))
+        `)
+        .eq("student_id", profile.id)
+        .order("date_of_incident", { ascending: false }),
+      supabase
+        .from("appeals")
+        .select("violation_id")
+        .eq("student_id", profile.id),
+    ]);
 
-    if (!error) setViolations((data as any) ?? []);
+    if (!violationsRes.error) {
+      const appealedIds = new Set((appealsRes.data ?? []).map((a) => a.violation_id));
+      const enriched = (violationsRes.data as any[]).map((v) => ({
+        ...v,
+        hasAppeal: appealedIds.has(v.id),
+      }));
+      setViolations(enriched);
+    }
+
     setLoading(false);
     setRefreshing(false);
   };
@@ -225,7 +269,8 @@ export default function StudentViolations() {
             <View style={{ backgroundColor: "#fff", borderRadius: 14, padding: 40, alignItems: "center" }}>
               <View style={{
                 width: 64, height: 64, borderRadius: 32,
-                backgroundColor: "#D1FAE5", alignItems: "center", justifyContent: "center", marginBottom: 14,
+                backgroundColor: "#D1FAE5", alignItems: "center",
+                justifyContent: "center", marginBottom: 14,
               }}>
                 <Ionicons name="checkmark-circle" size={36} color="#065F46" />
               </View>
@@ -240,19 +285,17 @@ export default function StudentViolations() {
         />
       )}
 
-      {/* Submit Appeal Modal */}
       <SubmitAppealModal
         visible={!!appealTarget}
         violationId={appealTarget?.id ?? ""}
         violationName={appealTarget?.violation_type?.name ?? ""}
         severity={appealTarget?.severity ?? ""}
         date={appealTarget?.date_of_incident ?? ""}
+        sanction={appealTarget?.sanctions?.[0]?.sanction?.name}
         onClose={() => setAppealTarget(null)}
         onSubmitted={() => {
           setAppealTarget(null);
-          setViolations((prev) =>
-            prev.map((v) => v.id === appealTarget?.id ? { ...v, status: "appealed" } : v)
-          );
+          fetchViolations();
         }}
       />
     </View>

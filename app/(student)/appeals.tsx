@@ -3,13 +3,13 @@ import { supabase } from "@/src/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Modal,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -40,11 +40,11 @@ interface Appeal {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_FILTERS: { key: FilterStatus; label: string }[] = [
-  { key: "all",          label: "All"          },
-  { key: "pending",      label: "Pending"      },
+  { key: "all", label: "All" },
+  { key: "pending", label: "Pending" },
   { key: "under_review", label: "Under Review" },
-  { key: "approved",     label: "Approved"     },
-  { key: "rejected",     label: "Rejected"     },
+  { key: "approved", label: "Approved" },
+  { key: "rejected", label: "Rejected" },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -64,10 +64,10 @@ const statusStyle = (s: AppealStatus) => {
 
 const severityStyle = (s: string) => {
   switch (s) {
-    case "Minor":  return { bg: "#FEF3C7", text: "#92400E" };
-    case "Major":  return { bg: "#FEE9D9", text: "#9A3412" };
+    case "Minor": return { bg: "#FEF3C7", text: "#92400E" };
+    case "Major": return { bg: "#FEE9D9", text: "#9A3412" };
     case "Severe": return { bg: "#FEE2E2", text: "#991B1B" };
-    default:       return { bg: "#F1F5F9", text: "#475569" };
+    default: return { bg: "#F1F5F9", text: "#475569" };
   }
 };
 
@@ -98,8 +98,8 @@ function ProgressStep({
   isLast?: boolean;
 }) {
   const dotBg =
-    state === "done"   ? "#D1FAE5" :
-    state === "active" ? "#FEF3C7" : "#F1F5F9";
+    state === "done" ? "#D1FAE5" :
+      state === "active" ? "#FEF3C7" : "#F1F5F9";
 
   return (
     <View style={{ flexDirection: "row", gap: 12 }}>
@@ -149,37 +149,37 @@ function ProgressStep({
 // ─── Build Steps from Status ──────────────────────────────────────────────────
 
 function buildSteps(appeal: Appeal) {
-  const submittedLabel  = `Appeal Submitted · ${formatDateTime(appeal.created_at)}`;
-  const reviewedLabel   = appeal.reviewed_at ? formatDateTime(appeal.reviewed_at) : undefined;
+  const submittedLabel = `Appeal Submitted · ${formatDateTime(appeal.created_at)}`;
+  const reviewedLabel = appeal.reviewed_at ? formatDateTime(appeal.reviewed_at) : undefined;
 
   switch (appeal.status) {
     case "pending":
       return [
-        { label: "Appeal Submitted",  sublabel: submittedLabel,              state: "done"    as StepState },
-        { label: "Under Review",      sublabel: "Awaiting officer assignment", state: "pending" as StepState },
-        { label: "Decision Made",     sublabel: undefined,                    state: "pending" as StepState },
-        { label: "Closed",            sublabel: undefined,                    state: "pending" as StepState },
+        { label: "Appeal Submitted", sublabel: submittedLabel, state: "done" as StepState },
+        { label: "Under Review", sublabel: "Awaiting officer assignment", state: "pending" as StepState },
+        { label: "Decision Made", sublabel: undefined, state: "pending" as StepState },
+        { label: "Closed", sublabel: undefined, state: "pending" as StepState },
       ];
     case "under_review":
       return [
-        { label: "Appeal Submitted",  sublabel: submittedLabel,                             state: "done"    as StepState },
-        { label: "Under Review",      sublabel: "An officer has been assigned to your case", state: "active"  as StepState },
-        { label: "Decision Made",     sublabel: "Awaiting review completion",                state: "pending" as StepState },
-        { label: "Closed",            sublabel: undefined,                                   state: "pending" as StepState },
+        { label: "Appeal Submitted", sublabel: submittedLabel, state: "done" as StepState },
+        { label: "Under Review", sublabel: "An officer has been assigned to your case", state: "active" as StepState },
+        { label: "Decision Made", sublabel: "Awaiting review completion", state: "pending" as StepState },
+        { label: "Closed", sublabel: undefined, state: "pending" as StepState },
       ];
     case "approved":
       return [
-        { label: "Appeal Submitted",       sublabel: submittedLabel, state: "done"   as StepState },
-        { label: "Under Review",           sublabel: reviewedLabel,  state: "done"   as StepState },
-        { label: "Decision Made: Approved",sublabel: reviewedLabel,  state: "done"   as StepState },
-        { label: "Closed",                 sublabel: "Case finalization and record update", state: "active" as StepState },
+        { label: "Appeal Submitted", sublabel: submittedLabel, state: "done" as StepState },
+        { label: "Under Review", sublabel: reviewedLabel, state: "done" as StepState },
+        { label: "Decision Made: Approved", sublabel: reviewedLabel, state: "done" as StepState },
+        { label: "Closed", sublabel: "Case finalization and record update", state: "active" as StepState },
       ];
     case "rejected":
       return [
-        { label: "Appeal Submitted",       sublabel: submittedLabel, state: "done"   as StepState },
-        { label: "Under Review",           sublabel: reviewedLabel,  state: "done"   as StepState },
-        { label: "Decision Made: Rejected",sublabel: reviewedLabel,  state: "active" as StepState },
-        { label: "Closed",                 sublabel: undefined,       state: "pending" as StepState },
+        { label: "Appeal Submitted", sublabel: submittedLabel, state: "done" as StepState },
+        { label: "Under Review", sublabel: reviewedLabel, state: "done" as StepState },
+        { label: "Decision Made: Rejected", sublabel: reviewedLabel, state: "active" as StepState },
+        { label: "Closed", sublabel: undefined, state: "pending" as StepState },
       ];
   }
 }
@@ -193,8 +193,8 @@ function AppealDetailModal({
   appeal: Appeal;
   onClose: () => void;
 }) {
-  const ss    = statusStyle(appeal.status);
-  const sv    = severityStyle(appeal.violation?.severity ?? "");
+  const ss = statusStyle(appeal.status);
+  const sv = severityStyle(appeal.violation?.severity ?? "");
   const steps = buildSteps(appeal);
 
   return (
@@ -410,14 +410,14 @@ function AppealCard({ item, onPress }: { item: Appeal; onPress: () => void }) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function StudentAppeals() {
-  const insets      = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
   const { profile } = useAuth();
 
-  const [appeals,   setAppeals]   = useState<Appeal[]>([]);
-  const [loading,   setLoading]   = useState(true);
-  const [refreshing,setRefreshing]= useState(false);
-  const [filter,    setFilter]    = useState<FilterStatus>("all");
-  const [selected,  setSelected]  = useState<Appeal | null>(null);
+  const [appeals, setAppeals] = useState<Appeal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<FilterStatus>("all");
+  const [selected, setSelected] = useState<Appeal | null>(null);
 
   const fetchAppeals = async (silent = false) => {
     if (!profile?.id) return;
@@ -426,14 +426,14 @@ export default function StudentAppeals() {
     const { data, error } = await supabase
       .from("appeals")
       .select(`
-        id, reason, explanation, preferred_resolution,
-        status, officer_notes, reviewed_at, created_at,
-        violation:violation_id (
-          id, severity, date_of_incident, description,
-          violation_type:violation_type_id ( name )
-        ),
-        reviewer:reviewed_by ( full_name )
-      `)
+    id, reason, explanation, preferred_resolution,
+    status, officer_notes, reviewed_at, created_at,
+    violation:student_violations!violation_id (
+      id, severity, date_of_incident, description,
+      violation_type:violation_types!violation_type_id ( name )
+    ),
+    reviewer:profiles!reviewed_by ( full_name )
+  `)
       .eq("student_id", profile.id)
       .order("created_at", { ascending: false });
 
@@ -449,11 +449,11 @@ export default function StudentAppeals() {
     : appeals.filter((a) => a.status === filter);
 
   const counts: Record<FilterStatus, number> = {
-    all:          appeals.length,
-    pending:      appeals.filter((a) => a.status === "pending").length,
+    all: appeals.length,
+    pending: appeals.filter((a) => a.status === "pending").length,
     under_review: appeals.filter((a) => a.status === "under_review").length,
-    approved:     appeals.filter((a) => a.status === "approved").length,
-    rejected:     appeals.filter((a) => a.status === "rejected").length,
+    approved: appeals.filter((a) => a.status === "approved").length,
+    rejected: appeals.filter((a) => a.status === "rejected").length,
   };
 
   return (

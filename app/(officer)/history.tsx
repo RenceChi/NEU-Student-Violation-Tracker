@@ -34,8 +34,8 @@ interface Violation {
 
 const severityStyle = (s: Severity) => {
   switch (s) {
-    case "Minor":  return { bg: "#FEF3C7", text: "#92400E", dot: "#F59E0B" };
-    case "Major":  return { bg: "#FEE9D9", text: "#9A3412", dot: "#F97316" };
+    case "Minor": return { bg: "#FEF3C7", text: "#92400E", dot: "#F59E0B" };
+    case "Major": return { bg: "#FEE9D9", text: "#9A3412", dot: "#F97316" };
     case "Severe": return { bg: "#FEE2E2", text: "#991B1B", dot: "#EF4444" };
   }
 };
@@ -43,29 +43,32 @@ const severityStyle = (s: Severity) => {
 const statusStyle = (s: string) => {
   switch (s) {
     case "resolved": return { bg: "#D1FAE5", text: "#065F46" };
-    case "pending":  return { bg: "#FEF3C7", text: "#92400E" };
+    case "pending": return { bg: "#FEF3C7", text: "#92400E" };
     case "appealed": return { bg: "#DBEAFE", text: "#1E40AF" };
-    default:         return { bg: "#F1F5F9", text: "#475569" };
+    case "overturned": return { bg: "#F3E8FF", text: "#6B21A8" };
+    default: return { bg: "#F1F5F9", text: "#475569" };
   }
 };
 
 const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  new Date(d).toLocaleDateString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+  });
 
 const initials = (name: string) =>
   name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
 // ─── Violation Row ────────────────────────────────────────────────────────────
 
-function ViolationRow({ item }: { item: Violation }) {
+function ViolationRow({ item, router }: { item: Violation; router: ReturnType<typeof useRouter> }) {
   const sv = severityStyle(item.severity);
   const st = statusStyle(item.status);
   const [expanded, setExpanded] = useState(false);
 
+  const canAssignSanction = item.status === "pending";
+
   return (
-    <TouchableOpacity
-      onPress={() => setExpanded((e) => !e)}
-      activeOpacity={0.85}
+    <View
       style={{
         backgroundColor: "#fff",
         borderRadius: 12,
@@ -82,31 +85,26 @@ function ViolationRow({ item }: { item: Violation }) {
       {/* Severity stripe */}
       <View style={{ height: 3, backgroundColor: sv.dot }} />
 
-      <View style={{ padding: 14 }}>
+      {/* Tappable header area */}
+      <TouchableOpacity
+        onPress={() => setExpanded((e) => !e)}
+        activeOpacity={0.85}
+        style={{ padding: 14 }}
+      >
         {/* Top row */}
         <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
-          {/* Student info */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: "#1E293B",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
+            <View style={{
+              width: 36, height: 36, borderRadius: 18,
+              backgroundColor: "#1E293B",
+              alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
               <Text style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}>
                 {initials(item.student?.full_name ?? "?")}
               </Text>
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text
-                style={{ fontSize: 14, fontWeight: "700", color: "#1E293B", marginBottom: 1 }}
-                numberOfLines={1}
-              >
+              <Text style={{ fontSize: 14, fontWeight: "700", color: "#1E293B", marginBottom: 1 }} numberOfLines={1}>
                 {item.student?.full_name ?? "Unknown"}
               </Text>
               <Text style={{ fontSize: 11, color: "#94A3B8" }} numberOfLines={1}>
@@ -115,8 +113,6 @@ function ViolationRow({ item }: { item: Violation }) {
               </Text>
             </View>
           </View>
-
-          {/* Chevron */}
           <Ionicons
             name={expanded ? "chevron-up" : "chevron-down"}
             size={16}
@@ -125,71 +121,108 @@ function ViolationRow({ item }: { item: Violation }) {
           />
         </View>
 
-        {/* Violation type + category */}
+        {/* Violation type */}
         <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 8 }} numberOfLines={1}>
           {item.violation_type?.name ?? "—"}
         </Text>
 
         {/* Badges row */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          {/* Severity */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: sv.bg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
             <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: sv.dot }} />
             <Text style={{ fontSize: 10, fontWeight: "700", color: sv.text }}>{item.severity.toUpperCase()}</Text>
           </View>
-
-          {/* Status */}
           <View style={{ backgroundColor: st.bg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
             <Text style={{ fontSize: 10, fontWeight: "700", color: st.text }}>{item.status.toUpperCase()}</Text>
           </View>
-
-          {/* Date */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginLeft: "auto" }}>
             <Ionicons name="calendar-outline" size={11} color="#94A3B8" />
             <Text style={{ fontSize: 11, color: "#94A3B8" }}>{formatDate(item.date_of_incident)}</Text>
           </View>
         </View>
+      </TouchableOpacity>
 
-        {/* Expanded details */}
-        {expanded && (
-          <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: "#F1F5F9", paddingTop: 12, gap: 6 }}>
-            {!!item.location && (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Ionicons name="location-outline" size={13} color="#94A3B8" />
-                <Text style={{ fontSize: 12, color: "#64748B" }}>{item.location}</Text>
-              </View>
-            )}
-            {!!item.description && (
-              <Text style={{ fontSize: 12, color: "#64748B", lineHeight: 18 }}>{item.description}</Text>
-            )}
-            {!!item.recorder && (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
-                <Ionicons name="person-outline" size={13} color="#94A3B8" />
-                <Text style={{ fontSize: 11, color: "#94A3B8", fontStyle: "italic" }}>
-                  Recorded by {item.recorder.full_name}
-                </Text>
-              </View>
+      {/* Expanded details — outside TouchableOpacity so buttons are tappable */}
+      {expanded && (
+        <View style={{ paddingHorizontal: 14, paddingBottom: 14, gap: 8, borderTopWidth: 1, borderTopColor: "#F1F5F9" }}>
+          {!!item.location && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 }}>
+              <Ionicons name="location-outline" size={13} color="#94A3B8" />
+              <Text style={{ fontSize: 12, color: "#64748B" }}>{item.location}</Text>
+            </View>
+          )}
+          {!!item.description && (
+            <Text style={{ fontSize: 12, color: "#64748B", lineHeight: 18 }}>{item.description}</Text>
+          )}
+          {!!item.recorder && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Ionicons name="person-outline" size={13} color="#94A3B8" />
+              <Text style={{ fontSize: 11, color: "#94A3B8", fontStyle: "italic" }}>
+                Recorded by {item.recorder.full_name}
+              </Text>
+            </View>
+          )}
+
+          {/* Action buttons */}
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+            <TouchableOpacity
+              onPress={() => {
+                setExpanded(false);
+                router.push({
+                  pathname: "/(officer)/violation/[id]" as any,
+                  params: { id: item.id },
+                });
+              }}
+              style={{
+                flex: 1,
+                flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+                backgroundColor: "#F1F5F9", borderRadius: 10, paddingVertical: 11,
+                borderWidth: 1, borderColor: "#E2E8F0",
+              }}
+            >
+              <Ionicons name="eye-outline" size={15} color="#475569" />
+              <Text style={{ fontSize: 13, fontWeight: "600", color: "#475569" }}>View Details</Text>
+            </TouchableOpacity>
+
+            {canAssignSanction && (
+              <TouchableOpacity
+                onPress={() => {
+                  setExpanded(false);
+                  router.push({
+                    pathname: "/(officer)/violation/assign-sanction" as any,
+                    params: { id: item.id },
+                  });
+                }}
+                style={{
+                  flex: 1,
+                  flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+                  backgroundColor: "#1E293B", borderRadius: 10, paddingVertical: 11,
+                }}
+              >
+                <Ionicons name="shield-checkmark-outline" size={15} color="#F59E0B" />
+                <Text style={{ fontSize: 13, fontWeight: "700", color: "#fff" }}>Assign Sanction</Text>
+              </TouchableOpacity>
             )}
           </View>
-        )}
-      </View>
-    </TouchableOpacity>
+        </View>
+      )}
+    </View>
   );
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
-  { key: "all",      label: "All" },
-  { key: "pending",  label: "Pending" },
+  { key: "all", label: "All" },
+  { key: "pending", label: "Pending" },
   { key: "resolved", label: "Resolved" },
   { key: "appealed", label: "Appealed" },
 ];
 
 const SEVERITY_FILTERS: { key: Severity | "all"; label: string }[] = [
-  { key: "all",    label: "All" },
-  { key: "Minor",  label: "Minor" },
-  { key: "Major",  label: "Major" },
+  { key: "all", label: "All" },
+  { key: "Minor", label: "Minor" },
+  { key: "Major", label: "Major" },
   { key: "Severe", label: "Severe" },
 ];
 
@@ -200,7 +233,6 @@ export default function ViolationHistory() {
   const [violations, setViolations] = useState<Violation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [severityFilter, setSeverityFilter] = useState<Severity | "all">("all");
@@ -223,7 +255,7 @@ export default function ViolationHistory() {
       `)
       .order("date_of_incident", { ascending: false });
 
-    if (status !== "all")   query = query.eq("status", status);
+    if (status !== "all") query = query.eq("status", status);
     if (severity !== "all") query = query.eq("severity", severity);
 
     const { data, error } = await query;
@@ -251,22 +283,9 @@ export default function ViolationHistory() {
   return (
     <View style={{ flex: 1, backgroundColor: "#F1F5F9" }}>
 
-      {/* ── Header ── */}
-      <View
-        style={{
-          backgroundColor: "#1E293B",
-          paddingTop: insets.top + 8,
-          paddingHorizontal: 16,
-        }}
-      >
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 16,
-          }}
-        >
+      {/* Header */}
+      <View style={{ backgroundColor: "#1E293B", paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <Text style={{ color: "#fff", fontSize: 20, fontWeight: "800" }}>Violations</Text>
           <View style={{ backgroundColor: "#F59E0B", borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
             <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>
@@ -282,19 +301,11 @@ export default function ViolationHistory() {
               key={f.key}
               onPress={() => setStatusFilter(f.key)}
               style={{
-                paddingHorizontal: 14,
-                paddingVertical: 6,
-                borderRadius: 20,
+                paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
                 backgroundColor: statusFilter === f.key ? "#F59E0B" : "rgba(255,255,255,0.1)",
               }}
             >
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "700",
-                  color: statusFilter === f.key ? "#fff" : "#94A3B8",
-                }}
-              >
+              <Text style={{ fontSize: 12, fontWeight: "700", color: statusFilter === f.key ? "#fff" : "#94A3B8" }}>
                 {f.label}
               </Text>
             </TouchableOpacity>
@@ -302,22 +313,14 @@ export default function ViolationHistory() {
         </View>
       </View>
 
-      {/* ── Search + severity filter ── */}
+      {/* Search + severity filter */}
       <View style={{ backgroundColor: "#F1F5F9", paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 }}>
         {/* Search bar */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: "#fff",
-            borderWidth: 1,
-            borderColor: "#E2E8F0",
-            borderRadius: 24,
-            paddingHorizontal: 14,
-            paddingVertical: 10,
-            marginBottom: 10,
-          }}
-        >
+        <View style={{
+          flexDirection: "row", alignItems: "center",
+          backgroundColor: "#fff", borderWidth: 1, borderColor: "#E2E8F0",
+          borderRadius: 24, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 10,
+        }}>
           <Ionicons name="search-outline" size={16} color="#F59E0B" style={{ marginRight: 8 }} />
           <TextInput
             value={search}
@@ -340,33 +343,19 @@ export default function ViolationHistory() {
               key={f.key}
               onPress={() => setSeverityFilter(f.key)}
               style={{
-                paddingHorizontal: 12,
-                paddingVertical: 5,
-                borderRadius: 20,
+                paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20,
                 backgroundColor:
                   severityFilter === f.key
-                    ? f.key === "all"
-                      ? "#1E293B"
-                      : f.key === "Minor"
-                      ? "#F59E0B"
-                      : f.key === "Major"
-                      ? "#F97316"
-                      : "#EF4444"
+                    ? f.key === "all" ? "#1E293B"
+                      : f.key === "Minor" ? "#F59E0B"
+                        : f.key === "Major" ? "#F97316"
+                          : "#EF4444"
                     : "#fff",
                 borderWidth: 1,
-                borderColor:
-                  severityFilter === f.key
-                    ? "transparent"
-                    : "#E2E8F0",
+                borderColor: severityFilter === f.key ? "transparent" : "#E2E8F0",
               }}
             >
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: "700",
-                  color: severityFilter === f.key ? "#fff" : "#64748B",
-                }}
-              >
+              <Text style={{ fontSize: 11, fontWeight: "700", color: severityFilter === f.key ? "#fff" : "#64748B" }}>
                 {f.label}
               </Text>
             </TouchableOpacity>
@@ -374,7 +363,7 @@ export default function ViolationHistory() {
         </View>
       </View>
 
-      {/* ── List ── */}
+      {/* List */}
       {loading ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <ActivityIndicator size="large" color="#F59E0B" />
@@ -383,7 +372,7 @@ export default function ViolationHistory() {
         <FlatList
           data={filtered}
           keyExtractor={(i) => i.id}
-          renderItem={({ item }) => <ViolationRow item={item} />}
+          renderItem={({ item }) => <ViolationRow item={item} router={router} />}
           contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           onRefresh={handleRefresh}
@@ -399,25 +388,16 @@ export default function ViolationHistory() {
         />
       )}
 
-      {/* ── FAB ── */}
+      {/* FAB */}
       <TouchableOpacity
         onPress={() => router.push("/(officer)/record")}
         style={{
-          position: "absolute",
-          bottom: 24 + insets.bottom,
-          right: 20,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 8,
-          backgroundColor: "#F59E0B",
-          borderRadius: 28,
-          paddingHorizontal: 20,
-          paddingVertical: 14,
-          shadowColor: "#000",
-          shadowOpacity: 0.2,
-          shadowRadius: 8,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 6,
+          position: "absolute", bottom: 24 + insets.bottom, right: 20,
+          flexDirection: "row", alignItems: "center", gap: 8,
+          backgroundColor: "#F59E0B", borderRadius: 28,
+          paddingHorizontal: 20, paddingVertical: 14,
+          shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 8,
+          shadowOffset: { width: 0, height: 4 }, elevation: 6,
         }}
       >
         <Ionicons name="add" size={20} color="#fff" />

@@ -75,9 +75,19 @@ export default function OfficerLayout() {
         }}
       />
 
+      <Tabs.Screen
+        name="appeals"
+        options={{
+          title: "Appeals",
+          tabBarIcon: ({ focused }) => <TabIcon name="chatbubble-ellipses" focused={focused} />,
+        }}
+      />
+
       {/* Hidden navigable screens — never shown in tab bar */}
       <Tabs.Screen name="record" options={{ href: null }} />
       <Tabs.Screen name="violation" options={{ href: null }} />
     </Tabs>
+
+
   );
 }
