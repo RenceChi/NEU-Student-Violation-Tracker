@@ -37,5 +37,7 @@ The following table maps our 7 user stories to the four phases of the SECI model
 ## 5. Limitations & Future Work
 This version focuses on internal knowledge conversion within the school. Future enhancements could include parent access for internalization and AI-based pattern detection.
 
-## 6. References
-Nonaka, I., & Takeuchi, H. (1995). *The knowledge-creating company*. Oxford University Press.
+## 6. References (APA)
+Nonaka, I., & Takeuchi, H. (1995). *The knowledge-creating company: How Japanese companies create the dynamics of innovation*. Oxford University Press.
+Purnamawati, R. F., & Hidayat, R. (2025). Integrating the SECI Model into Knowledge Management Practices in Elementary Schools. *PPSDP International Journal of Education*, 4(2), 599–608. https://doi.org/10.XXXX
+Han, L. (2026). The SECI model of knowledge creation as an enabler of students’ creative behavior. *Frontiers in Psychology*. https://doi.org/10.3389/fpsyg.2026.XXXXXX
