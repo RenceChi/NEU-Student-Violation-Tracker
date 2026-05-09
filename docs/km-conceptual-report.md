@@ -29,8 +29,6 @@ The following table maps our 7 key user stories to the SECI model. This demonstr
 | 6 | As an admin/officer, I can assign sanctions, link violations to school policies, and generate official reports. | **Internalization** (Explicit → Tacit) | Through the application of sanctions and review of outcomes, users (students, teachers, parents) convert explicit rules and consequences into internalized behavioral understanding and improved future actions. |
 | 7 | As a student or parent/guardian, I want to securely authenticate and log in to the system (using institutional email), so that I can access my personal dashboard, submit/view appeals, track status, upload evidence, and receive notifications while ensuring data privacy and role-based access. | **Socialization** (Tacit → Tacit) | Authentication serves as a foundational enabler for Socialization by ensuring only authorized users can safely share tacit knowledge through discussions, notifications, and collaborative case handling. |
 
-**Note**: Reports (US-06) and Appeals (US-07) are well-integrated in User Stories 6 and 7, strengthening the overall SECI knowledge spiral.
-
 ### 3.1 SECI Rationale for Reports and Appeals (US-06 & US-07)
 
 - **US-06 (Reports)**: Covered in User Story 6. Generating official reports and linking violations to school policies supports the **Internalization** phase. It allows administrators, teachers, students, and parents to review outcomes and convert explicit rules and consequences into internalized behavioral understanding and improved future actions.
@@ -48,7 +46,6 @@ This version focuses on internal school knowledge conversion. Future enhancement
 ## 6. References (APA)
 
 Nonaka, I., & Takeuchi, H. (1995). *The knowledge-creating company: How Japanese companies create the dynamics of innovation*. Oxford University Press.
+Purnamawati, R. F., & Hidayat, R. (2025). Integrating the SECI Model into Knowledge Management Practices in Elementary Schools. *PPSDP International Journal of Education*, 4(2), 599–608. https://doi.org/10.XXXX
+Han, L. (2026). The SECI model of knowledge creation as an enabler of students’ creative behavior. *Frontiers in Psychology*. https://doi.org/10.3389/fpsyg.2026.XXXXXX
 
-Purnamawati, R. F., & Hidayat, R. (2025). Integrating the SECI Model into Knowledge Management Practices in Elementary Schools. *PPSDP International Journal of Education*, 4(2), 599–608.
-
-Han, L. (2026). The SECI model of knowledge creation as an enabler of students’ creative behavior. *Frontiers in Psychology*, 17, Article 123456. https://doi.org/10.3389/fpsyg.2026.123456
