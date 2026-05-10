@@ -1,12 +1,16 @@
 import { useAuth } from "@/src/lib/context/AuthContext";
 import { supabase } from "@/src/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system/legacy";
 import { useRouter } from "expo-router";
+import * as Sharing from "expo-sharing";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
+  Linking,
   Modal,
   ScrollView,
   Text,
@@ -42,7 +46,7 @@ interface ViolationDetail {
   time_of_incident: string;
   location: string;
   description: string;
-  student: { full_name: string; student_id: string; section: string };
+  student: { id?: string; full_name: string; student_id: string; section: string };
   violation_type: { name: string; category: string };
   recorder: { full_name: string };
   assigned_sanctions: {
@@ -52,6 +56,12 @@ interface ViolationDetail {
     sanction: { name: string; duration: string };
     assigner: { full_name: string };
   }[];
+}
+
+interface EvidenceFile {
+  name: string;
+  url: string;
+  type: "image" | "document";
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -98,6 +108,21 @@ const formatDate = (d: string) =>
     month: "short", day: "numeric", year: "numeric",
   });
 
+const fileIcon = (name: string) => {
+  const ext = name.split(".").pop()?.toLowerCase();
+  if (ext && ["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image-outline";
+  if (ext === "pdf") return "document-text-outline";
+  return "document-outline";
+};
+
+const normalizePublicUrl = (url: string) => {
+  try {
+    return encodeURI(url);
+  } catch {
+    return url;
+  }
+};
+
 const initials = (name: string) =>
   name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
@@ -129,6 +154,10 @@ function ViolationDetailModal({
 
   const [violation, setViolation] = useState<ViolationDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [evidenceFiles, setEvidenceFiles] = useState<EvidenceFile[]>([]);
+  const [loadingEvidence, setLoadingEvidence] = useState(true);
+  const [selectedEvidence, setSelectedEvidence] = useState<EvidenceFile | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -138,7 +167,7 @@ function ViolationDetailModal({
         .from("student_violations")
         .select(`
           *,
-          student:profiles!student_id(full_name, student_id, section),
+          student:profiles!student_id(id, full_name, student_id, section),
           violation_type:violation_types(name, category),
           recorder:profiles!recorded_by(full_name),
           assigned_sanctions:violation_sanctions(
@@ -158,8 +187,123 @@ function ViolationDetailModal({
     return () => { active = false; };
   }, [id]);
 
+  useEffect(() => {
+    if (!violation) return;
+    
+    // Skip reloading if evidence is already loaded
+    if (evidenceFiles.length > 0) {
+      return;
+    }
+    
+    let active = true;
+
+    const loadEvidence = async () => {
+      setLoadingEvidence(true);
+      const folder = id;
+      const foundFiles: EvidenceFile[] = [];
+
+      const { data: list, error } = await supabase
+        .storage
+        .from("violation-evidence")
+        .list(folder, { limit: 100 });
+
+      if (!error && list) {
+        for (const item of list) {
+          const path = `${folder}/${item.name}`;
+          const { data: urlData } = supabase
+            .storage
+            .from("violation-evidence")
+            .getPublicUrl(path);
+
+          const rawUrl = urlData?.publicUrl ?? "";
+          const publicUrl = rawUrl ? normalizePublicUrl(rawUrl) : "";
+          if (!publicUrl) continue;
+
+          const ext = item.name.split(".").pop()?.toLowerCase();
+          const type: EvidenceFile["type"] = ext && ["jpg", "jpeg", "png", "gif", "webp"].includes(ext)
+            ? "image"
+            : "document";
+
+          console.log(`[Evidence] Loaded ${type} file: ${item.name}\nURL: ${publicUrl}`);
+          foundFiles.push({ name: item.name, url: publicUrl, type });
+        }
+      }
+
+      if (!active) return;
+      setEvidenceFiles(foundFiles);
+      setLoadingEvidence(false);
+    };
+
+    loadEvidence();
+    return () => { active = false; };
+  }, [id, violation]);
+
+  const openEvidence = async (url: string) => {
+    try {
+      const encodedUrl = normalizePublicUrl(url);
+      await Linking.openURL(encodedUrl);
+    } catch {
+      Alert.alert("Cannot open file", "This file cannot be opened on this device.");
+    }
+  };
+
+  const downloadEvidence = async (file: EvidenceFile) => {
+    setDownloading(true);
+    const destination = (FileSystem.documentDirectory ?? "") + `${Date.now()}_${file.name}`;
+
+    try {
+      const { uri } = await FileSystem.downloadAsync(file.url, destination);
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { mimeType: file.type === "image" ? "image/jpeg" : "application/octet-stream" });
+      } else {
+        Alert.alert("Download ready", `Saved to ${uri}`);
+      }
+    } catch (error: any) {
+      Alert.alert("Download failed", error?.message ?? "Unable to download the file.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const closeEvidenceViewer = () => setSelectedEvidence(null);
+
+  const EvidenceTile = ({ file }: { file: EvidenceFile }) => {
+    const [loadFailed, setLoadFailed] = useState(false);
+    const safeUrl = normalizePublicUrl(file.url);
+    const isImage = file.type === "image" && !loadFailed;
+
+    return (
+      <TouchableOpacity
+        onPress={() => setSelectedEvidence(file)}
+        activeOpacity={0.8}
+        style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: "#F1F5F9", alignItems: "center", justifyContent: "center", padding: 6 }}
+      >
+        {isImage ? (
+          <Image
+            source={{ uri: safeUrl }}
+            style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: "#E2E8F0" }}
+            resizeMode="cover"
+            onError={(e) => {
+              console.warn(`[Evidence] Image load failed for ${file.name}:`, e);
+              setLoadFailed(true);
+            }}
+          />
+        ) : (
+          <View style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: "#EEF2FF", alignItems: "center", justifyContent: "center", padding: 8 }}>
+            <Ionicons name={fileIcon(file.name)} size={28} color="#6366F1" />
+            <Text style={{ fontSize: 9, color: "#475569", marginTop: 4, textAlign: "center" }} numberOfLines={2}>
+              {file.name}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   const sc = violation ? severityBadgeStyle(violation.severity) : null;
   const ss = violation ? statusDetailStyle(violation.status) : null;
+
+  console.log(`[Violation Modal] Loaded ${evidenceFiles.length} evidence files:`, evidenceFiles);
 
   return (
     <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -216,15 +360,17 @@ function ViolationDetailModal({
               {/* Evidence */}
               <View style={{ backgroundColor: "#fff", borderRadius: 12, padding: 16, marginBottom: 12, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
                 <Text style={{ fontSize: 15, fontWeight: "700", color: "#1E293B", marginBottom: 12 }}>Evidence</Text>
-                <View style={{ flexDirection: "row", gap: 10 }}>
-                  <View style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: "#F1F5F9", alignItems: "center", justifyContent: "center" }}>
-                    <Ionicons name="image-outline" size={28} color="#CBD5E1" />
+                {loadingEvidence ? (
+                  <ActivityIndicator size="small" color="#94A3B8" />
+                ) : evidenceFiles.length === 0 ? (
+                  <Text style={{ fontSize: 13, color: "#64748B" }}>No evidence files uploaded for this violation.</Text>
+                ) : (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                    {evidenceFiles.map((file) => (
+                      <EvidenceTile key={file.name} file={file} />
+                    ))}
                   </View>
-                  <View style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: "#F1F5F9", alignItems: "center", justifyContent: "center" }}>
-                    <Ionicons name="document-outline" size={24} color="#CBD5E1" />
-                    <Text style={{ fontSize: 9, color: "#94A3B8", marginTop: 4 }}>EXAM_COPY.PDF</Text>
-                  </View>
-                </View>
+                )}
               </View>
 
               {/* Assigned Sanctions */}
@@ -251,6 +397,63 @@ function ViolationDetailModal({
                 </View>
               )}
             </ScrollView>
+
+            {selectedEvidence && (
+              <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 23, 42, 0.85)", paddingTop: insets.top + 16, paddingHorizontal: 16, zIndex: 20 }}>
+                <View style={{ flex: 1, backgroundColor: "#F8FAFC", borderRadius: 20, overflow: "hidden" }}>
+                  <View style={{ backgroundColor: "#1E293B", paddingTop: 16, paddingBottom: 14, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <TouchableOpacity onPress={closeEvidenceViewer} hitSlop={8}>
+                      <Ionicons name="arrow-back" size={22} color="#fff" />
+                    </TouchableOpacity>
+                    <Text style={{ color: "#fff", fontSize: 17, fontWeight: "700" }}>Evidence</Text>
+                    <View style={{ width: 22 }} />
+                  </View>
+
+                  <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
+                    {selectedEvidence.type === "image" ? (
+                      <Image
+                        source={{ uri: normalizePublicUrl(selectedEvidence.url) }}
+                        style={{ width: "100%", height: 320, borderRadius: 16, backgroundColor: "#E2E8F0" }}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <View style={{ width: "100%", height: 320, borderRadius: 16, backgroundColor: "#EEF2FF", alignItems: "center", justifyContent: "center", padding: 16 }}>
+                        <Ionicons name={fileIcon(selectedEvidence.name)} size={56} color="#6366F1" />
+                        <Text style={{ fontSize: 14, fontWeight: "700", color: "#1E293B", marginTop: 12, textAlign: "center" }}>
+                          {selectedEvidence.name}
+                        </Text>
+                      </View>
+                    )}
+
+                    <Text style={{ marginTop: 16, fontSize: 14, fontWeight: "700", color: "#1E293B" }}>{selectedEvidence.name}</Text>
+                    <Text style={{ fontSize: 12, color: "#64748B", marginTop: 4, marginBottom: 22 }}>
+                      {selectedEvidence.type === "image"
+                        ? "Tap open to view the full image or download it to share/save."
+                        : "Tap open to view the file in your browser or download it."}
+                    </Text>
+
+                    <TouchableOpacity
+                      onPress={() => openEvidence(selectedEvidence.url)}
+                      style={{ backgroundColor: "#1E293B", borderRadius: 12, paddingVertical: 14, alignItems: "center", marginBottom: 10 }}
+                    >
+                      <Text style={{ color: "#fff", fontSize: 15, fontWeight: "700" }}>Open</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => downloadEvidence(selectedEvidence)}
+                      disabled={downloading}
+                      style={{ backgroundColor: downloading ? "#94A3B8" : "#F59E0B", borderRadius: 12, paddingVertical: 14, alignItems: "center" }}
+                    >
+                      {downloading ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={{ color: "#1E293B", fontSize: 15, fontWeight: "700" }}>Download</Text>
+                      )}
+                    </TouchableOpacity>
+                  </ScrollView>
+                </View>
+              </View>
+            )}
 
             {/* Action buttons */}
             <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "#fff", borderTopWidth: 1, borderTopColor: "#F1F5F9", paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 12, gap: 10 }}>

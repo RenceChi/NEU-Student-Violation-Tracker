@@ -1,6 +1,8 @@
+import FileUploader from "@/components/FileUploader";
 import { useAuth } from "@/src/lib/context/AuthContext";
 import { supabase } from "@/src/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system/legacy";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -343,6 +345,7 @@ export default function RecordViolation() {
   // ── UI state ──
   const [submitting,  setSubmitting]  = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [uploadFolder] = useState(() => `new-violation-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
   const successOpacity = useRef(new Animated.Value(0)).current;
   const searchTimeout  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -413,6 +416,98 @@ export default function RecordViolation() {
     setTime(formatTime(new Date()));
   };
 
+  const moveEvidenceToViolation = async (violationId: string) => {
+    
+    const mimeTypeFor = (fileName: string) => {
+      const ext = fileName.split(".").pop()?.toLowerCase();
+      if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
+      if (ext === "png") return "image/png";
+      if (ext === "gif") return "image/gif";
+      if (ext === "webp") return "image/webp";
+      if (ext === "pdf") return "application/pdf";
+      return "application/octet-stream";
+    };
+
+    try {
+      const { data: list, error } = await supabase
+        .storage
+        .from("violation-evidence")
+        .list(uploadFolder, { limit: 100 });
+
+      if (error) {
+        console.warn(`[moveEvidenceToViolation] Error listing files:`, error.message);
+        return;
+      }
+      
+      if (!list || list.length === 0) {
+        console.log(`[moveEvidenceToViolation] No files found in ${uploadFolder}`);
+        return;
+      }
+
+      const movedFiles: string[] = [];
+      const tempDir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory;
+
+      console.log(`[moveEvidenceToViolation] Found ${list.length} files to move from ${uploadFolder} to ${violationId}`);
+
+      for (const item of list) {
+        const tempPath = `${uploadFolder}/${item.name}`;
+        const destPath = `${violationId}/${item.name}`;
+        
+        console.log(`[moveEvidenceToViolation] Processing ${item.name} (metadata size: ${item.metadata?.size ?? 'unknown'})`);
+
+        // Try copy first to see if that works
+        const { error: copyError } = await supabase
+          .storage
+          .from("violation-evidence")
+          .copy(tempPath, destPath);
+
+        if (copyError) {
+          console.warn(`[moveEvidenceToViolation] Failed to copy ${item.name} from ${tempPath} to ${destPath}:`, copyError.message);
+          continue;
+        }
+
+        console.log(`[moveEvidenceToViolation] Successfully copied ${item.name}`);
+        
+        // If copy succeeded, delete the original
+        const { error: deleteError } = await supabase
+          .storage
+          .from("violation-evidence")
+          .remove([tempPath]);
+
+        if (deleteError) {
+          console.warn(`[moveEvidenceToViolation] Failed to delete temp file ${item.name}:`, deleteError.message);
+        } else {
+          console.log(`[moveEvidenceToViolation] Deleted temp file ${item.name}`);
+          movedFiles.push(tempPath);
+        }
+      }
+
+      if (movedFiles.length > 0) {
+        const { error: removeError } = await supabase
+          .storage
+          .from("violation-evidence")
+          .remove(movedFiles);
+
+        if (removeError) {
+          console.warn("Failed to clean up temp evidence files:", removeError.message);
+        }
+      }
+      
+      // Delete the empty temp upload folder
+      try {
+        await supabase
+          .storage
+          .from("violation-evidence")
+          .remove([uploadFolder + "/"]);
+      } catch (e) {
+        // Folder deletion may fail, which is okay—just log it
+        console.log(`[moveEvidenceToViolation] Temp folder cleanup attempted for ${uploadFolder}`);
+      }
+    } catch (e) {
+      console.warn("Failed to move evidence to violation folder:", e);
+    }
+  };
+
   // ── Submit ──
   const handleSubmit = async () => {
     if (!selectedStudent)  { Alert.alert("Validation", "Please select a student."); return; }
@@ -420,22 +515,32 @@ export default function RecordViolation() {
     if (!description.trim()){ Alert.alert("Validation", "Please provide a description."); return; }
 
     setSubmitting(true);
-    const { error } = await supabase.from("student_violations").insert({
-      student_id:       selectedStudent.id,
-      violation_type_id: selectedViolation.id,
-      recorded_by:      profile?.id,
-      severity:         severity ?? selectedViolation.default_severity,
-      date_of_incident: date,
-      time_of_incident: time,
-      location:         location.trim() || null,
-      description:      description.trim(),
-      status:           "pending",
-    });
+    const inserted = await supabase
+      .from("student_violations")
+      .insert({
+        student_id:       selectedStudent.id,
+        violation_type_id: selectedViolation.id,
+        recorded_by:      profile?.id,
+        severity:         severity ?? selectedViolation.default_severity,
+        date_of_incident: date,
+        time_of_incident: time,
+        location:         location.trim() || null,
+        description:      description.trim(),
+        status:           "pending",
+      })
+      .select("id")
+      .single() as any;
+    const data = inserted.data as { id: string } | null;
+    const error = inserted.error as any;
     setSubmitting(false);
 
     if (error) {
       Alert.alert("Error", error.message);
     } else {
+      const createdViolationId = data?.id;
+      if (createdViolationId) {
+        await moveEvidenceToViolation(createdViolationId);
+      }
       triggerSuccess();
       resetForm();
     }
@@ -675,16 +780,10 @@ export default function RecordViolation() {
 
           {/* ── Evidence ── */}
           <SectionLabel label="EVIDENCE" />
-          <TouchableOpacity
-            onPress={() => Alert.alert("Upload", "File upload coming soon.")}
-            style={{ backgroundColor: "#F8FAFC", borderWidth: 1.5, borderColor: "#E2E8F0", borderStyle: "dashed", borderRadius: 10, alignItems: "center", justifyContent: "center", paddingVertical: 28 }}
-          >
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#EEF2FF", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
-              <Ionicons name="camera-outline" size={22} color="#6366F1" />
-            </View>
-            <Text style={{ fontSize: 14, fontWeight: "700", color: "#1E293B", marginBottom: 4 }}>Upload Photos or Files</Text>
-            <Text style={{ fontSize: 12, color: "#94A3B8" }}>Maximum file size 10MB</Text>
-          </TouchableOpacity>
+          <FileUploader
+            bucket="violation-evidence"
+            folder={uploadFolder}
+          />
 
         </ScrollView>
       </KeyboardAvoidingView>

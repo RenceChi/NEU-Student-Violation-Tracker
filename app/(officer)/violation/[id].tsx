@@ -4,12 +4,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    Linking,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -27,7 +29,7 @@ interface ViolationDetail {
   location: string;
   description: string;
   created_at: string;
-  student: { full_name: string; student_id: string; section: string };
+  student: { id?: string; full_name: string; student_id: string; section: string };
   violation_type: { name: string; category: string };
   recorder: { full_name: string };
   assigned_sanctions: {
@@ -37,6 +39,12 @@ interface ViolationDetail {
     sanction: { name: string; duration: string };
     assigner: { full_name: string };
   }[];
+}
+
+interface EvidenceFile {
+  name: string;
+  url: string;
+  type: "image" | "document";
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -63,6 +71,19 @@ const statusStyle = (s: string) => {
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
+const fileIcon = (name: string) => {
+  const ext = name.split(".").pop()?.toLowerCase();
+  if (ext && ["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image-outline";
+  if (ext === "pdf") return "document-text-outline";
+  return "document-outline";
+};
+const normalizePublicUrl = (url: string) => {
+  try {
+    return encodeURI(url);
+  } catch {
+    return url;
+  }
+};
 // ─── Detail Row ───────────────────────────────────────────────────────────────
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -85,6 +106,8 @@ export default function ViolationDetailScreen() {
 
   const [violation, setViolation] = useState<ViolationDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [evidenceFiles, setEvidenceFiles] = useState<EvidenceFile[]>([]);
+  const [loadingEvidence, setLoadingEvidence] = useState(true);
 
 
   useEffect(() => {
@@ -95,7 +118,7 @@ export default function ViolationDetailScreen() {
         .from("student_violations")
         .select(`
           *,
-          student:profiles!student_id(full_name, student_id, section),
+          student:profiles!student_id(id, full_name, student_id, section),
           violation_type:violation_types(name, category),
           recorder:profiles!recorded_by(full_name),
           assigned_sanctions:violation_sanctions(
@@ -115,6 +138,99 @@ export default function ViolationDetailScreen() {
     return () => { active = false; };
   }, [id]);
 
+  useEffect(() => {
+    if (!violation) return;
+    
+    // Skip reloading if evidence is already loaded
+    if (evidenceFiles.length > 0) {
+      return;
+    }
+    
+    let active = true;
+
+    const loadEvidence = async () => {
+      setLoadingEvidence(true);
+      const folder = id;
+      const foundFiles: EvidenceFile[] = [];
+
+      const { data: list, error } = await supabase
+        .storage
+        .from("violation-evidence")
+        .list(folder, { limit: 100 });
+
+      if (!error && list) {
+        for (const item of list) {
+          const path = `${folder}/${item.name}`;
+          const { data: urlData } = supabase
+            .storage
+            .from("violation-evidence")
+            .getPublicUrl(path);
+
+          const rawUrl = urlData?.publicUrl ?? "";
+          const publicUrl = rawUrl ? normalizePublicUrl(rawUrl) : "";
+          if (!publicUrl) continue;
+
+          const ext = item.name.split(".").pop()?.toLowerCase();
+          const type: EvidenceFile["type"] = ext && ["jpg", "jpeg", "png", "gif", "webp"].includes(ext)
+            ? "image"
+            : "document";
+
+          console.log(`[Evidence] Loaded ${type} file: ${item.name}\nURL: ${publicUrl}`);
+          foundFiles.push({ name: item.name, url: publicUrl, type });
+        }
+      }
+
+      if (!active) return;
+      setEvidenceFiles(foundFiles);
+      setLoadingEvidence(false);
+    };
+
+    loadEvidence();
+    return () => { active = false; };
+  }, [id, violation]);
+
+  const openEvidence = async (url: string) => {
+    try {
+      const encodedUrl = normalizePublicUrl(url);
+      await Linking.openURL(encodedUrl);
+    } catch {
+      Alert.alert("Cannot open file", "This file cannot be opened on this device.");
+    }
+  };
+
+  const EvidenceTile = ({ file }: { file: EvidenceFile }) => {
+    const [loadFailed, setLoadFailed] = useState(false);
+    const safeUrl = normalizePublicUrl(file.url);
+    const isImage = file.type === "image" && !loadFailed;
+
+    return (
+      <TouchableOpacity
+        onPress={() => openEvidence(safeUrl)}
+        activeOpacity={0.8}
+        style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: "#F1F5F9", alignItems: "center", justifyContent: "center", padding: 6 }}
+      >
+        {isImage ? (
+          <Image
+            source={{ uri: safeUrl }}
+            style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: "#E2E8F0" }}
+            resizeMode="cover"
+            onError={(e) => {
+              console.warn(`[Evidence] Image load failed for ${file.name}:`, e);
+              setLoadFailed(true);
+            }}
+          />
+        ) : (
+          <View style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: "#EEF2FF", alignItems: "center", justifyContent: "center", padding: 8 }}>
+            <Ionicons name={fileIcon(file.name)} size={28} color="#6366F1" />
+            <Text style={{ fontSize: 9, color: "#475569", marginTop: 4, textAlign: "center" }} numberOfLines={2}>
+              {file.name}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#F8FAFC" }}>
@@ -133,6 +249,8 @@ export default function ViolationDetailScreen() {
 
   const sc = severityStyle(violation.severity);
   const ss = statusStyle(violation.status);
+
+  console.log(`[Violation Detail] Loaded ${evidenceFiles.length} evidence files:`, evidenceFiles);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
@@ -185,16 +303,17 @@ export default function ViolationDetailScreen() {
         {/* ── Evidence ── */}
         <View style={{ backgroundColor: "#fff", borderRadius: 12, padding: 16, marginBottom: 12, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
           <Text style={{ fontSize: 15, fontWeight: "700", color: "#1E293B", marginBottom: 12 }}>Evidence</Text>
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            {/* Placeholder evidence tiles */}
-            <View style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: "#F1F5F9", alignItems: "center", justifyContent: "center" }}>
-              <Ionicons name="image-outline" size={28} color="#CBD5E1" />
+          {loadingEvidence ? (
+            <ActivityIndicator size="small" color="#94A3B8" />
+          ) : evidenceFiles.length === 0 ? (
+            <Text style={{ fontSize: 13, color: "#64748B" }}>No evidence files uploaded for this violation.</Text>
+          ) : (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+              {evidenceFiles.map((file) => (
+                <EvidenceTile key={file.name} file={file} />
+              ))}
             </View>
-            <View style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: "#F1F5F9", alignItems: "center", justifyContent: "center" }}>
-              <Ionicons name="document-outline" size={24} color="#CBD5E1" />
-              <Text style={{ fontSize: 9, color: "#94A3B8", marginTop: 4 }}>EXAM_COPY.PDF</Text>
-            </View>
-          </View>
+          )}
         </View>
 
         {/* ── Assigned Sanctions ── */}

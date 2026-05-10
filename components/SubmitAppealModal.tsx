@@ -13,6 +13,7 @@
  *   onSubmitted    — called after successful insert so parent can refresh
  */
 
+import FileUploader from "@/components/FileUploader";
 import { useAuth } from "@/src/lib/context/AuthContext";
 import { supabase } from "@/src/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
@@ -316,38 +317,14 @@ export default function SubmitAppealModal({
             }}
           />
 
-          {/* Supporting evidence placeholder */}
+          {/* Supporting evidence upload */}
           <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748B", letterSpacing: 1, marginBottom: 8 }}>
             SUPPORTING EVIDENCE
           </Text>
-          <TouchableOpacity
-            onPress={() => Alert.alert("Coming Soon", "File upload will be available in a future update.")}
-            style={{
-              backgroundColor: "#F8FAFC",
-              borderWidth: 1.5,
-              borderColor: "#E2E8F0",
-              borderStyle: "dashed",
-              borderRadius: 10,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingVertical: 24,
-              marginBottom: 16,
-            }}
-          >
-            <View style={{
-              width: 40, height: 40, borderRadius: 20,
-              backgroundColor: "#EEF2FF",
-              alignItems: "center", justifyContent: "center", marginBottom: 8,
-            }}>
-              <Ionicons name="cloud-upload-outline" size={20} color="#6366F1" />
-            </View>
-            <Text style={{ fontSize: 13, fontWeight: "600", color: "#1E293B", marginBottom: 3 }}>
-              Tap to upload files or photos
-            </Text>
-            <Text style={{ fontSize: 11, color: "#94A3B8" }}>
-              PDF, JPG, or PNG (max 10MB)
-            </Text>
-          </TouchableOpacity>
+          <FileUploader
+            bucket="violation-evidence"
+            folder={violationId}
+          />
 
           {/* Preferred resolution dropdown */}
           <Dropdown
