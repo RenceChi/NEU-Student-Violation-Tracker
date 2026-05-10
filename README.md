@@ -26,6 +26,23 @@ This app is grounded in the **SECI Model** of Knowledge Management:
 | Backend / Auth / DB | Supabase (PostgreSQL + Auth) |
 | Styling | NativeWind v4 (Tailwind CSS for RN) |
 | Language | TypeScript |
+| Build & Distribution | EAS Build (Expo Application Services) |
+
+---
+
+## Features
+
+| Feature | Roles |
+|---|---|
+| Login with role-based routing | Admin, Officer, Student |
+| Record student violations with date, time, location, severity | Admin, Officer |
+| Assign sanctions to violations | Admin, Officer |
+| View full violation history with search and filters | Admin, Officer |
+| Manage violation types and sanctions library | Admin only |
+| Generate reports with severity breakdown and trends | Admin only |
+| Submit and track appeals on violations | Student |
+| Review and decide on student appeals | Admin, Officer |
+| View own violation history and appeal status | Student |
 
 ---
 
@@ -34,24 +51,58 @@ This app is grounded in the **SECI Model** of Knowledge Management:
 ```
 NEU-Student-Violation-Tracker/
 ├── app/                        # Expo Router screens
-│   ├── (officer)/              # Officer route group
-│   │   └── _layout.tsx
+│   ├── (auth)/                 # Login screen
+│   │   ├── _layout.tsx
+│   │   └── login.tsx
+│   ├── (officer)/              # Officer/Admin route group
+│   │   ├── violation/          # Nested violation stack
+│   │   │   ├── _layout.tsx
+│   │   │   ├── [id].tsx        # Violation detail screen
+│   │   │   └── assign-sanction.tsx
+│   │   ├── _layout.tsx
+│   │   ├── index.tsx           # Dashboard
+│   │   ├── history.tsx         # Violation history + search
+│   │   ├── library.tsx         # Violation types & sanctions
+│   │   ├── record.tsx          # Record new violation
+│   │   ├── report.tsx          # Analytics & reports
+│   │   └── appeals.tsx         # Appeal review
 │   ├── (student)/              # Student route group
-│   │   └── _layout.tsx
-│   └── _layout.tsx             # Root layout
+│   │   ├── _layout.tsx
+│   │   ├── index.tsx           # Student dashboard
+│   │   ├── violations.tsx      # Own violation history
+│   │   └── appeals.tsx         # Own appeal status
+│   ├── _layout.tsx             # Root layout (AuthProvider)
+│   └── index.tsx               # Entry point (role-based redirect)
+├── components/                 # Reusable UI components
+│   ├── DateTimePickers.tsx     # Custom drum-scroll date/time pickers
+│   ├── SubmitAppealModal.tsx   # Student appeal submission modal
+│   ├── StyledText.tsx
+│   ├── Themed.tsx
+│   └── __tests__/
 ├── src/
-│   ├── lib/                    # Supabase client
-│   ├── components/             # Reusable UI components
-│   └── types/                  # TypeScript types
+│   └── lib/
+│       ├── supabase.ts         # Supabase client configuration
+│       └── context/
+│           └── AuthContext.tsx # Session + profile context
+├── constants/
+│   └── Colors.ts
 ├── docs/
 │   ├── adr/                    # Architecture Decision Records
 │   ├── prompt-logs/            # Per-member AI prompt logs
 │   │   └── developer/
 │   │       └── prompt-log.md
 │   ├── standups/               # Weekly standup notes
-│   ├── wireframes/             # UI wireframes
-│   └── test-cases/             # QA test cases
+│   ├── wireframes/             # UI wireframes with KM annotations
+│   ├── test-cases/             # QA test cases
+│   ├── km-architecture.md      # Knowledge taxonomy and retrieval design
+│   ├── km-report.md            # KM Conceptual Report
+│   ├── design-rationale.md     # UX/UI design decisions
+│   └── failure-analysis.md     # QA failure analysis report
 ├── assets/                     # Images, fonts, icons
+├── global.css                  # NativeWind base styles
+├── babel.config.js
+├── metro.config.js
+├── tailwind.config.js
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
 └── README.md
@@ -64,8 +115,8 @@ NEU-Student-Violation-Tracker/
 ### Prerequisites
 
 - Node.js 18+
-- Expo Go app on your mobile device
-- A Supabase project
+- Expo Go app on your mobile device (for development)
+- A Supabase project with the schema applied
 
 ### Installation
 
@@ -93,15 +144,61 @@ Create a `.env` file in the root directory:
 EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 ```
-
 ---
 
 ## User Roles
 
 | Role | Access |
 |---|---|
-| **Officer / Admin** | Record violations, view all records, manage students |
-| **Student** | View own violation history and status |
+| **Admin** | Full access — all officer features + library management + reports |
+| **Officer** | Record violations, assign sanctions, review appeals |
+| **Student** | View own violation history, submit and track appeals |
+
+---
+
+## Deployment
+
+The production APK is built and distributed using **EAS Build** (Expo Application Services).
+
+### Build the APK
+
+```bash
+# 1. Log in to your Expo account
+eas login
+
+# 2. Trigger a production build
+eas build --platform android --profile production
+```
+
+The build runs in the cloud (~10–20 minutes). When complete, the APK download link appears in your [Expo dashboard](https://expo.dev).
+
+### Environment Variables for Production
+
+Secrets are injected at build time via EAS — they are never committed to the repo.
+
+```bash
+# Supabase URL (plain text)
+eas env:create --scope project --name EXPO_PUBLIC_SUPABASE_URL \
+  --value https://your-project-id.supabase.co
+
+# Supabase Anon Key (sensitive)
+eas env:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY \
+  --value your-anon-key-here
+```
+
+Set visibility to **Sensitive** for the anon key. Select **production** as the environment.
+
+### Installing the APK on Android
+
+1. Download the `.apk` from your Expo dashboard.
+2. Transfer to your Android device.
+3. Enable **Install from unknown sources** in Android Settings → Security.
+4. Open the `.apk` file to install.
+
+### Expo Project
+
+- **Project ID:** `1871aa65-2033-467b-882e-01d2d2bec686`
+- **EAS Dashboard:** [expo.dev/accounts/prismic/projects/NEU-Student-Violation-Tracker](https://expo.dev/accounts/prismic/projects/NEU-Student-Violation-Tracker)
 
 ---
 
@@ -119,11 +216,11 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
 | GitHub | Role |
 |---|---|
-| RenceChi | Project Manager |
-| prismic7 | Full-Stack Developer |
-| ZyCallado | QA & Documentation Lead |
-| pwecii | UX/UI Designer |
-| Jax-rgb | Knowledge Management Analyst |
+| Clark Lawrence Ching | Project Manager |
+| Frinz Hughwie Bautista | Full-Stack Developer |
+| Zyrus Velasco | QA & Documentation Lead |
+| Precy Baguio | UX/UI Designer |
+| Jacques Euan Carigma | Knowledge Management Analyst |
 
 ---
 
@@ -136,9 +233,9 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
 ---
 
-## Deployment
+## Screenshots
 
-_To be documented in Sprint 2._
+_To be added after APK is installed and tested on device._
 
 ---
 
