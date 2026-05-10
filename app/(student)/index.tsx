@@ -5,7 +5,6 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -15,278 +14,69 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Severity = "Minor" | "Major" | "Severe";
-
-interface MyViolation {
-  id: string;
-  severity: Severity;
-  date_of_incident: string;
-  status: string;
-  description: string;
-  violation_type: { name: string; category: string } | null;
-  sanctions: { sanction: { name: string; duration: string } | null }[];
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const severityStyle = (s: Severity) => {
-  switch (s) {
-    case "Minor":  return { bg: "#FEF3C7", text: "#92400E", dot: "#F59E0B" };
-    case "Major":  return { bg: "#FEE9D9", text: "#9A3412", dot: "#F97316" };
-    case "Severe": return { bg: "#FEE2E2", text: "#991B1B", dot: "#EF4444" };
-  }
-};
-
-const statusStyle = (s: string) => {
-  switch (s) {
-    case "resolved": return { bg: "#D1FAE5", text: "#065F46", icon: "checkmark-circle" as const };
-    case "pending":  return { bg: "#FEF3C7", text: "#92400E", icon: "time" as const };
-    case "appealed": return { bg: "#DBEAFE", text: "#1E40AF", icon: "chatbubble-ellipses" as const };
-    default:         return { bg: "#F1F5F9", text: "#475569", icon: "ellipsis-horizontal" as const };
-  }
-};
-
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-
-// ─── Violation Card ───────────────────────────────────────────────────────────
-
-function ViolationCard({
-  item,
-  onAppeal,
-}: {
-  item: MyViolation;
-  onAppeal: (id: string) => void;
-}) {
-  const sv = severityStyle(item.severity);
-  const st = statusStyle(item.status);
-  const [expanded, setExpanded] = useState(false);
-  const canAppeal = item.status === "pending";
-
-  return (
-    <View
-      style={{
-        backgroundColor: "#fff",
-        borderRadius: 14,
-        marginBottom: 10,
-        shadowColor: "#000",
-        shadowOpacity: 0.04,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 2,
-        overflow: "hidden",
-      }}
-    >
-      {/* Severity bar */}
-      <View style={{ height: 4, backgroundColor: sv.dot }} />
-
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() => setExpanded((e) => !e)}
-        style={{ padding: 14 }}
-      >
-        {/* Header row */}
-        <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
-          <Text style={{ fontSize: 15, fontWeight: "700", color: "#1E293B", flex: 1, marginRight: 8 }} numberOfLines={1}>
-            {item.violation_type?.name ?? "Violation"}
-          </Text>
-          <Ionicons name={expanded ? "chevron-up" : "chevron-down"} size={16} color="#94A3B8" />
-        </View>
-
-        {/* Badges */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: sv.bg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: sv.dot }} />
-            <Text style={{ fontSize: 10, fontWeight: "700", color: sv.text }}>{item.severity.toUpperCase()}</Text>
-          </View>
-
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: st.bg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-            <Ionicons name={st.icon} size={10} color={st.text} />
-            <Text style={{ fontSize: 10, fontWeight: "700", color: st.text }}>{item.status.toUpperCase()}</Text>
-          </View>
-
-          <Text style={{ fontSize: 11, color: "#94A3B8", marginLeft: "auto" }}>
-            {formatDate(item.date_of_incident)}
-          </Text>
-        </View>
-
-        {/* Expanded */}
-        {expanded && (
-          <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: "#F1F5F9", paddingTop: 12, gap: 10 }}>
-            {!!item.description && (
-              <Text style={{ fontSize: 13, color: "#64748B", lineHeight: 20 }}>{item.description}</Text>
-            )}
-
-            {/* Sanctions */}
-            {item.sanctions?.length > 0 && (
-              <View>
-                <Text style={{ fontSize: 11, fontWeight: "700", color: "#94A3B8", letterSpacing: 1, marginBottom: 6 }}>
-                  SANCTIONS
-                </Text>
-                {item.sanctions.filter(s => !!s.sanction).map((s, i) => (
-                  <View
-                    key={i}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 8,
-                      backgroundColor: "#F8FAFC",
-                      borderRadius: 8,
-                      padding: 10,
-                      marginBottom: 4,
-                    }}
-                  >
-                    <Ionicons name="alert-circle-outline" size={14} color="#F97316" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: "600", color: "#334155" }}>{s.sanction!.name}</Text>
-                      {!!s.sanction!.duration && (
-                        <Text style={{ fontSize: 11, color: "#94A3B8" }}>Duration: {s.sanction!.duration}</Text>
-                      )}
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Appeal button */}
-            {canAppeal && (
-              <TouchableOpacity
-                onPress={() => onAppeal(item.id)}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  backgroundColor: "#EFF6FF",
-                  borderWidth: 1,
-                  borderColor: "#BFDBFE",
-                  borderRadius: 10,
-                  paddingVertical: 12,
-                  marginTop: 4,
-                }}
-              >
-                <Ionicons name="chatbubble-ellipses-outline" size={16} color="#1E40AF" />
-                <Text style={{ fontSize: 13, fontWeight: "700", color: "#1E40AF" }}>Submit Appeal</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-      </TouchableOpacity>
-    </View>
-  );
+interface Stats {
+  total: number;
+  pending: number;
+  resolved: number;
+  appealed: number;
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
-export default function StudentDashboard() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
+export default function StudentHome() {
+  const insets      = useSafeAreaInsets();
+  const router      = useRouter();
   const { profile } = useAuth();
 
-  const [violations, setViolations] = useState<MyViolation[]>([]);
+  const [stats,   setStats]   = useState<Stats>({ total: 0, pending: 0, resolved: 0, appealed: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchStats = async () => {
       if (!profile?.id) return;
       setLoading(true);
 
       const { data, error } = await supabase
         .from("student_violations")
-        .select(`
-          id, severity, date_of_incident, status, description,
-          violation_type:violation_type_id(name, category),
-          sanctions:violation_sanctions(sanction:sanction_id(name, duration))
-        `)
-        .eq("student_id", profile.id)
-        .order("date_of_incident", { ascending: false });
+        .select("id, status")
+        .eq("student_id", profile.id);
 
-      if (!error) setViolations((data as any) ?? []);
+      if (!error && data) {
+        setStats({
+          total:    data.length,
+          pending:  data.filter((v) => v.status === "pending").length,
+          resolved: data.filter((v) => v.status === "resolved").length,
+          appealed: data.filter((v) => v.status === "appealed").length,
+        });
+      }
       setLoading(false);
     };
-    fetch();
+    fetchStats();
   }, [profile?.id]);
-
-  const handleAppeal = (violationId: string) => {
-    Alert.alert(
-      "Submit Appeal",
-      "Are you sure you want to submit an appeal for this violation?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Submit",
-          onPress: async () => {
-            // Insert into appeals table
-            const { error: appealError } = await supabase
-              .from("appeals")
-              .insert({
-                violation_id: violationId,
-                student_id: profile?.id,
-                reason: "Student appeal",
-                status: "pending",
-              });
-
-            if (appealError) {
-              Alert.alert("Error", appealError.message);
-              return;
-            }
-
-            // Update violation status to appealed
-            const { error: statusError } = await supabase
-              .from("student_violations")
-              .update({ status: "appealed" })
-              .eq("id", violationId);
-
-            if (statusError) {
-              Alert.alert("Error", statusError.message);
-              return;
-            }
-
-            setViolations((prev) =>
-              prev.map((v) => (v.id === violationId ? { ...v, status: "appealed" } : v))
-            );
-            Alert.alert("Appeal Submitted", "Your appeal has been submitted and is under review.");
-          },
-        },
-      ]
-    );
-  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.replace("/(auth)/login");
   };
 
-  // Stats
-  const pending  = violations.filter((v) => v.status === "pending").length;
-  const resolved = violations.filter((v) => v.status === "resolved").length;
-  const appealed = violations.filter((v) => v.status === "appealed").length;
-
   return (
     <View style={{ flex: 1, backgroundColor: "#F1F5F9" }}>
 
       {/* ── Header ── */}
-      <View
-        style={{
-          backgroundColor: "#1E293B",
-          paddingTop: insets.top + 12,
-          paddingBottom: 28,
-          paddingHorizontal: 20,
-        }}
-      >
+      <View style={{
+        backgroundColor: "#1E293B",
+        paddingTop: insets.top + 12,
+        paddingBottom: 28,
+        paddingHorizontal: 20,
+      }}>
         {/* Top bar */}
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                backgroundColor: "#F59E0B",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+            <View style={{
+              width: 36, height: 36, borderRadius: 10,
+              backgroundColor: "#F59E0B",
+              alignItems: "center", justifyContent: "center",
+            }}>
               <Ionicons name="shield-checkmark" size={20} color="#fff" />
             </View>
             <View>
@@ -300,13 +90,9 @@ export default function StudentDashboard() {
           <TouchableOpacity
             onPress={handleLogout}
             style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 6,
+              flexDirection: "row", alignItems: "center", gap: 6,
               backgroundColor: "rgba(255,255,255,0.08)",
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              borderRadius: 8,
+              paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
             }}
           >
             <Ionicons name="log-out-outline" size={15} color="#94A3B8" />
@@ -316,18 +102,12 @@ export default function StudentDashboard() {
 
         {/* Student info */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-          <View
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 26,
-              backgroundColor: "#F59E0B",
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 2,
-              borderColor: "rgba(255,255,255,0.2)",
-            }}
-          >
+          <View style={{
+            width: 52, height: 52, borderRadius: 26,
+            backgroundColor: "#F59E0B",
+            alignItems: "center", justifyContent: "center",
+            borderWidth: 2, borderColor: "rgba(255,255,255,0.2)",
+          }}>
             <Text style={{ color: "#fff", fontSize: 18, fontWeight: "800" }}>
               {profile?.full_name
                 ? profile.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
@@ -352,29 +132,22 @@ export default function StudentDashboard() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 16, paddingBottom: 60 }}
       >
-
-        {/* ── Status Summary ── */}
+        {/* ── My Record ── */}
         <Text style={{ fontSize: 11, fontWeight: "700", color: "#94A3B8", letterSpacing: 1, marginBottom: 10 }}>
           MY RECORD
         </Text>
 
         <View style={{ flexDirection: "row", gap: 10, marginBottom: 24 }}>
           {[
-            { label: "TOTAL",    value: violations.length, bg: "#1E293B", textColor: "#fff" },
-            { label: "PENDING",  value: pending,           bg: "#FEF3C7", textColor: "#92400E" },
-            { label: "RESOLVED", value: resolved,          bg: "#D1FAE5", textColor: "#065F46" },
-            { label: "APPEALED", value: appealed,          bg: "#DBEAFE", textColor: "#1E40AF" },
+            { label: "TOTAL",    value: stats.total,    bg: "#1E293B", textColor: "#fff"     },
+            { label: "PENDING",  value: stats.pending,  bg: "#FEF3C7", textColor: "#92400E"  },
+            { label: "RESOLVED", value: stats.resolved, bg: "#D1FAE5", textColor: "#065F46"  },
+            { label: "APPEALED", value: stats.appealed, bg: "#DBEAFE", textColor: "#1E40AF"  },
           ].map((s) => (
-            <View
-              key={s.label}
-              style={{
-                flex: 1,
-                backgroundColor: s.bg,
-                borderRadius: 12,
-                padding: 12,
-                alignItems: "center",
-              }}
-            >
+            <View key={s.label} style={{
+              flex: 1, backgroundColor: s.bg,
+              borderRadius: 12, padding: 12, alignItems: "center",
+            }}>
               {loading ? (
                 <ActivityIndicator size="small" color={s.textColor} />
               ) : (
@@ -387,69 +160,68 @@ export default function StudentDashboard() {
           ))}
         </View>
 
-        {/* ── Info banner ── */}
-        <View
-          style={{
-            backgroundColor: "#EFF6FF",
-            borderWidth: 1,
-            borderColor: "#BFDBFE",
-            borderRadius: 12,
-            padding: 14,
-            flexDirection: "row",
-            alignItems: "flex-start",
-            gap: 10,
-            marginBottom: 20,
-          }}
-        >
-          <Ionicons name="information-circle-outline" size={18} color="#1E40AF" style={{ marginTop: 1 }} />
-          <Text style={{ fontSize: 12, color: "#1E40AF", flex: 1, lineHeight: 18 }}>
-            You can submit an appeal on any pending violation. Tap a violation card to expand details and manage your appeal.
-          </Text>
-        </View>
-
-        {/* ── Violations ── */}
+        {/* ── Quick Actions ── */}
         <Text style={{ fontSize: 11, fontWeight: "700", color: "#94A3B8", letterSpacing: 1, marginBottom: 10 }}>
-          VIOLATION HISTORY
+          QUICK ACTIONS
         </Text>
 
-        {loading ? (
-          <View style={{ alignItems: "center", paddingVertical: 48 }}>
-            <ActivityIndicator size="large" color="#F59E0B" />
-          </View>
-        ) : violations.length === 0 ? (
-          <View
+        <View style={{ gap: 10, marginBottom: 24 }}>
+          <TouchableOpacity
+            onPress={() => router.navigate("/(student)/violations")}
             style={{
-              backgroundColor: "#fff",
-              borderRadius: 14,
-              padding: 40,
-              alignItems: "center",
+              backgroundColor: "#fff", borderRadius: 12, padding: 16,
+              flexDirection: "row", alignItems: "center", gap: 14,
+              shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 }, elevation: 2,
             }}
           >
-            <View
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: 32,
-                backgroundColor: "#D1FAE5",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 14,
-              }}
-            >
-              <Ionicons name="checkmark-circle" size={36} color="#065F46" />
+            <View style={{
+              width: 40, height: 40, borderRadius: 10,
+              backgroundColor: "#FEF3C7", alignItems: "center", justifyContent: "center",
+            }}>
+              <Ionicons name="document-text" size={20} color="#F59E0B" />
             </View>
-            <Text style={{ fontSize: 16, fontWeight: "800", color: "#1E293B", marginBottom: 6 }}>
-              Clean Record
-            </Text>
-            <Text style={{ fontSize: 13, color: "#94A3B8", textAlign: "center" }}>
-              You have no violations on record. Keep it up!
-            </Text>
-          </View>
-        ) : (
-          violations.map((v) => (
-            <ViolationCard key={v.id} item={v} onAppeal={handleAppeal} />
-          ))
-        )}
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: "#1E293B" }}>My Violations</Text>
+              <Text style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>Check history and details</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.navigate("/(student)/appeals")}
+            style={{
+              backgroundColor: "#fff", borderRadius: 12, padding: 16,
+              flexDirection: "row", alignItems: "center", gap: 14,
+              shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 }, elevation: 2,
+            }}
+          >
+            <View style={{
+              width: 40, height: 40, borderRadius: 10,
+              backgroundColor: "#DBEAFE", alignItems: "center", justifyContent: "center",
+            }}>
+              <Ionicons name="chatbubble-ellipses" size={20} color="#1E40AF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: "#1E293B" }}>My Appeals</Text>
+              <Text style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>Track active appeal status</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Info banner ── */}
+        <View style={{
+          backgroundColor: "#EFF6FF", borderWidth: 1, borderColor: "#BFDBFE",
+          borderRadius: 12, padding: 14,
+          flexDirection: "row", alignItems: "flex-start", gap: 10,
+        }}>
+          <Ionicons name="information-circle-outline" size={18} color="#1E40AF" style={{ marginTop: 1 }} />
+          <Text style={{ fontSize: 12, color: "#1E40AF", flex: 1, lineHeight: 18 }}>
+            You can submit an appeal on any pending violation. Go to your Violations tab to view details and manage appeals.
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );

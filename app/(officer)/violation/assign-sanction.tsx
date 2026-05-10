@@ -4,14 +4,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -128,7 +128,7 @@ export default function AssignSanctionScreen() {
 
     setSubmitting(false);
     Alert.alert("Success", "Sanction assigned successfully.", [
-      { text: "OK", onPress: () => router.back() },
+      { text: "OK", onPress: () => router.dismissAll() },
     ]);
   };
 
@@ -147,7 +147,7 @@ export default function AssignSanctionScreen() {
 
       {/* ── Header ── */}
       <View style={{ backgroundColor: "#1E293B", paddingTop: insets.top + 8, paddingBottom: 14, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+        <TouchableOpacity onPress={() => router.dismiss()} hitSlop={8}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={{ color: "#fff", fontSize: 17, fontWeight: "700" }}>Assign Sanction</Text>
