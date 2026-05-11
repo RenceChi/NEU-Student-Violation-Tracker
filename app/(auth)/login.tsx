@@ -24,13 +24,59 @@ const isValidEmail = (val: string) =>
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function LoginScreen() {
-  const [identifier, setIdentifier]     = useState("");
-  const [password, setPassword]         = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading]           = useState(false);
-  const [resetLoading, setResetLoading] = useState(false);
-  const router  = useRouter();
-  const insets  = useSafeAreaInsets();
+  const [identifier, setIdentifier]       = useState("");
+  const [password, setPassword]           = useState("");
+  const [showPassword, setShowPassword]   = useState(false);
+  const [loading, setLoading]             = useState(false);
+  const [resetLoading, setResetLoading]   = useState(false);
+  const [isSignUp, setIsSignUp]           = useState(false);
+  const [fullName, setFullName]           = useState("");
+  const [signUpLoading, setSignUpLoading] = useState(false);
+
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  // ── Google Auth ────────────────────────────────────────────────────────────
+
+  const { promptAsync: googlePrompt, loading: googleLoading } = useGoogleAuth(
+    // onSuccess: called with the Supabase user ID after sign-in
+    async (userId) => {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      if (profileError || !profile) {
+        await supabase.auth.signOut();
+        Alert.alert(
+          "Account Error",
+          "Your account profile could not be loaded. Please contact your administrator.",
+        );
+        return;
+      }
+
+      routeByRole(profile.role);
+    },
+    // onError: called if Google sign-in or Supabase exchange fails
+    (msg) => Alert.alert("Google Sign-In Failed", msg),
+  );
+
+  // ── Role-based routing ─────────────────────────────────────────────────────
+
+  function routeByRole(role: string) {
+    if (role === "student") {
+      router.replace("/(student)");
+    } else if (role === "officer" || role === "admin") {
+      router.replace("/(officer)");
+    } else {
+      supabase.auth.signOut();
+      Alert.alert(
+        "Access Denied",
+        "Your account does not have a valid role assigned. Contact your administrator.",
+      );
+    }
+  }
 
   // ── Login ──────────────────────────────────────────────────────────────────
 
@@ -48,7 +94,6 @@ export default function LoginScreen() {
 
     setLoading(true);
 
-    // Step 1: Sign in
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -65,7 +110,6 @@ export default function LoginScreen() {
       return;
     }
 
-    // Step 2: Fetch role — handle failure gracefully
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
@@ -73,7 +117,6 @@ export default function LoginScreen() {
       .single();
 
     if (profileError || !profile) {
-      // Auth succeeded but profile is missing — sign out and show error
       await supabase.auth.signOut();
       Alert.alert(
         "Account Error",
@@ -83,21 +126,69 @@ export default function LoginScreen() {
       return;
     }
 
-    // Step 3: Route by role
-    if (profile.role === "student") {
-      router.replace("/(student)");
-    } else if (profile.role === "officer" || profile.role === "admin") {
-      router.replace("/(officer)");
-    } else {
-      // Unknown role — sign out and block access
-      await supabase.auth.signOut();
-      Alert.alert(
-        "Access Denied",
-        "Your account does not have a valid role assigned. Contact your administrator.",
-      );
+    routeByRole(profile.role);
+    setLoading(false);
+  }
+
+  // ── Sign Up ────────────────────────────────────────────────────────────────
+
+  async function handleSignUp() {
+    const email = identifier.trim();
+
+    if (!fullName.trim()) {
+      Alert.alert("Missing Name", "Please enter your full name.");
+      return;
+    }
+    if (!email || !password) {
+      Alert.alert("Missing Fields", "Please fill in all fields.");
+      return;
+    }
+    if (!isValidEmail(email)) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert("Weak Password", "Password must be at least 6 characters.");
+      return;
     }
 
-    setLoading(false);
+    setSignUpLoading(true);
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName.trim() } },
+    });
+
+    if (signUpError) {
+      Alert.alert("Sign Up Failed", signUpError.message);
+      setSignUpLoading(false);
+      return;
+    }
+
+    if (!data.user) {
+      Alert.alert("Sign Up Failed", "Could not create your account. Please try again.");
+      setSignUpLoading(false);
+      return;
+    }
+
+    await supabase.from("profiles").upsert({
+      id: data.user.id,
+      full_name: fullName.trim(),
+      role: "student",
+    });
+
+    setSignUpLoading(false);
+
+    Alert.alert(
+      "Account Created",
+      "Your account has been created. Please check your email to confirm your address before logging in.",
+      [{ text: "OK", onPress: () => setIsSignUp(false) }],
+    );
+
+    setFullName("");
+    setIdentifier("");
+    setPassword("");
   }
 
   // ── Forgot Password ────────────────────────────────────────────────────────
@@ -173,11 +264,67 @@ export default function LoginScreen() {
           backgroundColor: "#fff",
           paddingHorizontal: 28,
           paddingTop: 32,
-          paddingBottom: 32,
+          paddingBottom: Math.max(32, insets.bottom + 24),
         }}>
-          <Text style={{ fontSize: 20, fontWeight: "700", color: "#1E293B", marginBottom: 28 }}>
-            Sign In
-          </Text>
+
+          {/* ── Mode toggle ── */}
+          <View style={{
+            flexDirection: "row",
+            backgroundColor: "#F1F5F9",
+            borderRadius: 8,
+            padding: 4,
+            marginBottom: 28,
+          }}>
+            <TouchableOpacity
+              onPress={() => setIsSignUp(false)}
+              style={{
+                flex: 1, paddingVertical: 8, alignItems: "center",
+                borderRadius: 6,
+                backgroundColor: !isSignUp ? "#1E293B" : "transparent",
+              }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: "700", color: !isSignUp ? "#fff" : "#64748B" }}>
+                Sign In
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setIsSignUp(true)}
+              style={{
+                flex: 1, paddingVertical: 8, alignItems: "center",
+                borderRadius: 6,
+                backgroundColor: isSignUp ? "#1E293B" : "transparent",
+              }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: "700", color: isSignUp ? "#fff" : "#64748B" }}>
+                Sign Up
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* ── Full Name (sign-up only) ── */}
+          {isSignUp && (
+            <>
+              <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748B", letterSpacing: 1, marginBottom: 8 }}>
+                FULL NAME
+              </Text>
+              <View style={{
+                flexDirection: "row", alignItems: "center",
+                borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 8,
+                paddingHorizontal: 14, marginBottom: 20,
+              }}>
+                <Feather name="user" size={16} color="#F59E0B" style={{ marginRight: 10 }} />
+                <TextInput
+                  placeholder="Enter your full name"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  autoCapitalize="words"
+                  autoComplete="name"
+                  placeholderTextColor="#CBD5E1"
+                  style={{ flex: 1, paddingVertical: 14, fontSize: 14, color: "#1E293B" }}
+                />
+              </View>
+            </>
+          )}
 
           {/* Email */}
           <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748B", letterSpacing: 1, marginBottom: 8 }}>
@@ -206,12 +353,14 @@ export default function LoginScreen() {
             <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748B", letterSpacing: 1 }}>
               PASSWORD
             </Text>
-            <TouchableOpacity onPress={handleForgotPassword} disabled={resetLoading} hitSlop={8}>
-              {resetLoading
-                ? <ActivityIndicator size="small" color="#F59E0B" />
-                : <Text style={{ fontSize: 12, fontWeight: "600", color: "#F59E0B" }}>Forgot Password?</Text>
-              }
-            </TouchableOpacity>
+            {!isSignUp && (
+              <TouchableOpacity onPress={handleForgotPassword} disabled={resetLoading} hitSlop={8}>
+                {resetLoading
+                  ? <ActivityIndicator size="small" color="#F59E0B" />
+                  : <Text style={{ fontSize: 12, fontWeight: "600", color: "#F59E0B" }}>Forgot Password?</Text>
+                }
+              </TouchableOpacity>
+            )}
           </View>
           <View style={{
             flexDirection: "row", alignItems: "center",
@@ -233,12 +382,12 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Login button */}
+          {/* ── Primary action button ── */}
           <TouchableOpacity
-            onPress={handleLogin}
-            disabled={loading}
+            onPress={isSignUp ? handleSignUp : handleLogin}
+            disabled={anyLoading}
             style={{
-              backgroundColor: loading ? "#475569" : "#1E293B",
+              backgroundColor: anyLoading ? "#475569" : "#1E293B",
               borderRadius: 8,
               paddingVertical: 16,
               alignItems: "center",
@@ -248,11 +397,13 @@ export default function LoginScreen() {
               marginBottom: 16,
             }}
           >
-            {loading
+            {(loading || signUpLoading)
               ? <ActivityIndicator color="#fff" />
               : <>
-                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Login</Text>
-                  <Feather name="log-in" size={16} color="#fff" />
+                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
+                    {isSignUp ? "Create Account" : "Login"}
+                  </Text>
+                  <Feather name={isSignUp ? "user-plus" : "log-in"} size={16} color="#fff" />
                 </>
             }
           </TouchableOpacity>
@@ -289,7 +440,10 @@ export default function LoginScreen() {
 
           {/* Footer */}
           <Text style={{ textAlign: "center", fontSize: 11, color: "#94A3B8", lineHeight: 16, marginBottom: 16 }}>
-            Access is restricted to authorized personnel.{"\n"}Your activity is being monitored for compliance.
+            {isSignUp
+              ? "New accounts are reviewed by administrators.\nRole access is assigned after verification."
+              : "Access is restricted to authorized personnel.\nYour activity is being monitored for compliance."
+            }
           </Text>
 
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
