@@ -572,9 +572,92 @@ clean before the presentation on Tuesday.
 
 ---
 
-## Entry #6 — *(Reserved — Feature Freeze / Polish Week)*
-
-> To be filed at the start of Week 7.
+## Entry #6 — Polish Week Declaration & Pre-Presentation Cleanup
+ 
+| Field | Details |
+|---|---|
+| **Date** | 05/08/2026 |
+| **Decision Made** | Declare Polish Week active, confirm feature freeze is enforced, and define the scope of permitted changes before the Tuesday 05/12/2026 presentation |
+| **Status** | Decided |
+| **Who Was Consulted** | All 5 members |
+ 
+### Context
+Following the Sprint 2 close and feature freeze declaration in
+Entry #5, EduGuard has been successfully deployed to a live
+production environment accessible via Expo Go. All 7 features
+are functional and the app is demo-ready. QA (ZyCallado) has
+fully committed all test case documents (TC-01 through TC-07)
+and the Sprint QA summary report to the `dev` branch.
+ 
+The team is now in the Polish phase. The feature freeze declared
+in Entry #5 remains fully in effect. No new features or database
+schema changes are permitted. All remaining work is limited to
+refinement, cleanup, and presentation preparation.
+ 
+---
+ 
+### Decision 6.1 — Polish Scope Definition
+ 
+The following categories of work are **permitted** during Polish Week:
+ 
+| Category | Description | Owner |
+|---|---|---|
+| UI bug fixes | Fix any visual or functional bugs discovered during demo rehearsal — no new features | prismic7 |
+| Loading & empty states | Ensure every screen handles loading and empty data gracefully | prismic7 |
+| Code comments cleanup | All new code must have inline comments so every member can explain it during oral defense | prismic7 |
+| README finalization | README.md updated with app name (EduGuard), setup instructions, team details, and deployment link | prismic7 |
+| Prompt logs update | All 5 members commit their final prompt-log.md entries before Tuesday | All members |
+| Documentation review | PM reviews all /docs entries for completeness — decision log, standups, user stories, wireframes | RenceChi |
+| KM Conceptual Report final review | Jax-rgb confirms the report is proofread and the SECI summary table covers all 7 features | Jax-rgb |
+| Oral defense prep | Each member prepares talking points for their individual section | All members |
+ 
+The following are **not permitted** during Polish Week:
+ 
+| Not Permitted | Reason |
+|---|---|
+| New feature branches | Feature freeze is active — Entry #5 |
+| Database schema changes | Risk of breaking existing deployed data in production |
+| New API endpoints or Supabase table changes | Same risk as above |
+| Changes to core navigation structure | Could break the demo flow rehearsed by the team |
+ 
+---
+ 
+### Decision 6.2 — QA Deliverables Confirmed Complete
+ 
+ZyCallado has fully committed all QA deliverables to the
+repository. This closes the acknowledged gap from Entry #5
+where formal QA was noted as in progress.
+ 
+| QA Deliverable | Status |
+|---|---|
+| TC-01 — Authentication test cases | ✅ Committed |
+| TC-02 — Violation library test cases | ✅ Committed |
+| TC-03 — Record violation test cases | ✅ Committed |
+| TC-04 — View history test cases | ✅ Committed |
+| TC-05 — Assign sanctions test cases | ✅ Committed |
+| TC-06 — Generate reports test cases | ✅ Committed |
+| TC-07 — Appeal process test cases | ✅ Committed |
+| Sprint QA summary report | ✅ Committed |
+ 
+ 
+---
+ 
+### Consequences
+ 
+**Easier because of this decision:**
+- A clearly defined polish scope prevents scope creep in the
+  final days before the presentation.
+- With QA documents fully committed, the repo is now complete
+  and the instructor can navigate /docs and find every required
+  deliverable.
+- The team can shift focus entirely to demo rehearsal and
+  individual oral defense preparation.
+**Harder because of this decision:**
+- Any bug found during Sunday's demo rehearsal must be fixed
+  Saturday. There is no buffer. prismic7 must be available
+  for critical fixes over the weekend.
+- Each member must update their prompt-log.md before Tuesday
+  or risk failing their individual contribution grade.
 
 ---
 
