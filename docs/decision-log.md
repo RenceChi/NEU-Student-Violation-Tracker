@@ -661,7 +661,128 @@ where formal QA was noted as in progress.
 
 ---
 
-## Entry #7 — *(Reserved — Deployment)*
-
-> To be filed at the end of Week 8 after final merge to `main`
-> and oral defense completion.
+## Entry #7 — Deployment & Project Close
+ 
+| Field | Details |
+|---|---|
+| **Date** | 05/12/2026 |
+| **Decision Made** | Declare EduGuard officially deployed and the project complete. Confirm final merge to `main`, production environment, and oral defense readiness |
+| **Status** | Decided |
+| **Who Was Consulted** | All 5 members |
+ 
+### Context
+EduGuard — the Student Violation Knowledge Management System
+built by Group 3 (Section 3BSCS-2, AY 2025-2026) — has been
+deployed to a live production environment accessible via Expo Go.
+The application implements all 7 planned features across 45 story
+points, covering the full SECI model cycle from Authentication
+(Socialization) through the Appeal Process (Socialization).
+ 
+This entry formally closes the project's development lifecycle
+and documents the final state of the application for the
+academic record.
+ 
+---
+ 
+### Decision 7.1 — Final Deployment Confirmed
+ 
+| Item | Details |
+|---|---|
+| **App name** | EduGuard |
+| **Platform** | Cross-platform mobile (iOS & Android via Expo Go) |
+| **Frontend** | React Native (Expo) |
+| **Backend / Database** | Supabase (PostgreSQL + Row Level Security) |
+| **Authentication** | Supabase Auth (Email/Password + role-based access) |
+| **Deployment environment** | Live — production URL / Expo Go link |
+| **Final branch merged to main** | `dev` → `main` via final PR |
+| **Release tag** | v1.0.0 |
+ 
+---
+ 
+### Decision 7.2 — All Project Deliverables Confirmed
+ 
+The following deliverables are confirmed complete and committed
+to the repository at the time of this entry:
+ 
+**Code deliverables:**
+ 
+| Branch | Feature | Status |
+|---|---|---|
+| `feat/auth` | Authentication & role-based access | ✅ Merged to main |
+| `feat/violation-library` | Manage violation types & sanctions library | ✅ Merged to main |
+| `feat/violation-record` | Record student violation | ✅ Merged to main |
+| `feat/violation-history` | View student violation history | ✅ Merged to main |
+| `feat/sanctions` | Assign sanctions / penalties | ✅ Merged to main |
+| `feat/reports` | Generate violation reports | ✅ Merged to main |
+| `feat/appeals` | Student violation appeal process | ✅ Merged to main |
+ 
+**Documentation deliverables:**
+ 
+| Document | Location | Owner | Status |
+|---|---|---|---|
+| Decision Log (Entries #1–7) | /docs/decision-log.md | RenceChi | ✅ Complete |
+| User Stories (US-01 to US-07) | /docs/user-stories/ | RenceChi | ✅ Complete |
+| Architecture Decision Records (ADR #1–3) | /docs/adr/ | prismic7 | ✅ Complete |
+| KM Conceptual Report + SECI summary | /docs/km-conceptual-report.md | Jax-rgb | ✅ Complete |
+| Hi-fi wireframes (HIFI-01 to HIFI-09) | /docs/wireframes/hifi/ | pwecii | ✅ Complete |
+| Test cases TC-01 to TC-07 + QA report | /docs/test-cases/ | ZyCallado | ✅ Complete |
+| Standup notes (Weeks 1–8) | /docs/standups/ | RenceChi | ✅ Complete |
+| Prompt logs | /docs/ (per member) | All members | ✅ Complete |
+| README.md | /README.md | prismic7 | ✅ Complete |
+ 
+---
+ 
+### Decision 7.3 — KM Framework Implementation Summary
+ 
+The EduGuard system successfully implements the SECI model
+as the Knowledge Management framework across all 7 features:
+ 
+| SECI Phase | Features Implemented | KM Outcome |
+|---|---|---|
+| **Socialization** | Authentication, Appeal Process | Trust boundaries established. Knowledge flows only between authorized roles. Students can engage with the system through appeals — a dialogue-based knowledge exchange. |
+| **Externalization** | Record Student Violation | Tacit officer judgment is converted into a structured, retrievable violation record. The Save Draft feature supports iterative knowledge capture before formal submission. |
+| **Combination** | Violation Library, View History, Generate Reports | Institutional policy is codified in the library. Individual records are aggregated into patterns via history and reports. Audit trails on the library ensure knowledge governance. |
+| **Internalization** | Assign Sanctions, Violation Details | Officers apply explicit policy knowledge (the sanctions library) to a specific case. The Case Progression timeline makes the full knowledge lifecycle of a case visible. |
+ 
+---
+ 
+### Decision 7.4 — Oral Defense Readiness
+ 
+Each member is responsible for defending their individual
+section during the presentation on Tuesday, May 12, 2026:
+ 
+| Member | GitHub | Defense Section |
+|---|---|---|
+| RenceChi | PM | Sprint timeline, decision log rationale, team coordination, GitHub workflow |
+| prismic7 | Dev | Database schema, Supabase RLS policies, Expo architecture, ADR decisions |
+| Jax-rgb | KM Analyst | SECI framework mapping, KM Conceptual Report, why each feature advances the KMS |
+| pwecii | UX/UI | Design system (EduGuard navy + gold palette), screen flow, wireframe-to-implementation fidelity |
+| ZyCallado | QA Lead | Test case coverage, QA methodology, bugs found and resolved, known limitations |
+ 
+---
+ 
+### Project Statistics at Close
+ 
+| Metric | Value |
+|---|---|
+| Total story points delivered | 45 pts |
+| Total features shipped | 7 |
+| Total sprints | 2 (Sprint 1: 33 pts, Sprint 2: 12 pts) |
+| Total screens designed | 9 hi-fi screens |
+| Total test case documents | 7 (TC-01 through TC-07) |
+| Total ADRs | 3 |
+| Total decision log entries | 7 |
+| Total weeks | 8 |
+| KM framework | SECI Model (Nonaka & Takeuchi) |
+| App name | EduGuard |
+ 
+### Consequences
+ 
+**The project is complete.** EduGuard is a fully deployed,
+cross-platform mobile Knowledge Management System that digitizes
+the university's disciplinary process. The system captures tacit
+officer knowledge (Externalization), stores it in a structured
+repository (Combination), distributes it through role-based
+access (Socialization), and enables informed decision-making
+(Internalization) — implementing the full SECI cycle as a
+functional mobile application.
