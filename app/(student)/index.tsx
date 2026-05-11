@@ -5,7 +5,6 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,           // ← ITEM 2: needed for the logout confirmation dialog
   ScrollView,
   Text,
   TouchableOpacity,
@@ -55,33 +54,9 @@ export default function StudentHome() {
     fetchStats();
   }, [profile?.id]);
 
-  // ── ITEM 2: Logout with confirmation ────────────────────────────────────────
-  // Shows a native Alert dialog before signing out.
-  // We don't need to call router.replace() manually — when signOut() succeeds,
-  // Supabase fires the onAuthStateChange listener in AuthContext which sets
-  // session = null, and the root _layout.tsx handles the redirect to login.
-  const handleLogout = () => {
-    Alert.alert(
-      "Log Out",
-      "Are you sure you want to log out?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",     // Dismisses the dialog — no action taken
-        },
-        {
-          text: "Log Out",
-          style: "destructive", // Renders red on iOS to signal a destructive action
-          onPress: async () => {
-            const { error } = await supabase.auth.signOut();
-            if (error) {
-              Alert.alert("Error", "Could not log out. Please try again.");
-            }
-            // AuthContext handles redirect automatically on session = null
-          },
-        },
-      ],
-    );
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/(auth)/login");
   };
 
   return (
@@ -192,7 +167,7 @@ export default function StudentHome() {
 
         <View style={{ gap: 10, marginBottom: 24 }}>
           <TouchableOpacity
-            onPress={() => router.push("/(student)/violations" as any)}
+            onPress={() => router.navigate("/(student)/violations")}
             style={{
               backgroundColor: "#fff", borderRadius: 12, padding: 16,
               flexDirection: "row", alignItems: "center", gap: 14,
@@ -214,7 +189,7 @@ export default function StudentHome() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => router.push("/(student)/appeals" as any)}
+            onPress={() => router.navigate("/(student)/appeals")}
             style={{
               backgroundColor: "#fff", borderRadius: 12, padding: 16,
               flexDirection: "row", alignItems: "center", gap: 14,
