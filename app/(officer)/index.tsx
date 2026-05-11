@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,           // ← ITEM 2: needed for logout confirmation dialog
   ScrollView,
   Text,
   TouchableOpacity,
@@ -205,9 +206,30 @@ export default function OfficerDashboard() {
     fetchData();
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.replace("/(auth)/login");
+  // ── ITEM 2: Logout with confirmation ────────────────────────────────────────
+  // Shows a native Alert before signing out. No manual router.replace() needed
+  // — AuthContext detects session = null and root _layout.tsx redirects to login.
+  const handleLogout = () => {
+    Alert.alert(
+      "Log Out",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Log Out",
+          style: "destructive", // Renders red on iOS
+          onPress: async () => {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+              Alert.alert("Error", "Could not log out. Please try again.");
+            }
+          },
+        },
+      ],
+    );
   };
 
   const greeting = () => {

@@ -27,6 +27,10 @@ CREATE POLICY "Users can update own profile"
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
+CREATE POLICY "Authenticated users can insert own profile"
+  ON profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
 -- ── Step 3: student_violations ───────────────────────────────
 
 DROP POLICY IF EXISTS "Officers and admins can insert violations" ON student_violations;
