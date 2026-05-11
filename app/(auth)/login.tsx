@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useGoogleAuth } from "../../src/lib/googleAuth";
 import { supabase } from "../../src/lib/supabase";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -40,7 +41,6 @@ export default function LoginScreen() {
       Alert.alert("Missing Fields", "Please enter your email and password.");
       return;
     }
-
     if (!isValidEmail(email)) {
       Alert.alert("Invalid Email", "Please enter a valid email address.");
       return;
@@ -106,13 +106,9 @@ export default function LoginScreen() {
     const email = identifier.trim();
 
     if (!email) {
-      Alert.alert(
-        "Enter Your Email",
-        "Type your email address in the field above, then tap Forgot Password.",
-      );
+      Alert.alert("Enter Your Email", "Type your email address in the field above, then tap Forgot Password.");
       return;
     }
-
     if (!isValidEmail(email)) {
       Alert.alert("Invalid Email", "Please enter a valid email address first.");
       return;
@@ -121,7 +117,7 @@ export default function LoginScreen() {
     setResetLoading(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "eduguard://reset-password",
+      redirectTo: "neustudentviolationtracker://reset-password",
     });
 
     setResetLoading(false);
@@ -129,14 +125,13 @@ export default function LoginScreen() {
     if (error) {
       Alert.alert("Error", error.message);
     } else {
-      Alert.alert(
-        "Reset Email Sent",
-        `A password reset link has been sent to ${email}. Check your inbox.`,
-      );
+      Alert.alert("Reset Email Sent", `A password reset link has been sent to ${email}. Check your inbox.`);
     }
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  const anyLoading = loading || signUpLoading || googleLoading;
 
   return (
     <KeyboardAvoidingView
@@ -250,7 +245,7 @@ export default function LoginScreen() {
               justifyContent: "center",
               flexDirection: "row",
               gap: 8,
-              marginBottom: 24,
+              marginBottom: 16,
             }}
           >
             {loading
@@ -261,6 +256,36 @@ export default function LoginScreen() {
                 </>
             }
           </TouchableOpacity>
+
+          {/* ── Google Sign-In Button (Sign In mode only) ── */}
+          {!isSignUp && (
+            <TouchableOpacity
+              onPress={() => googlePrompt()}
+              disabled={anyLoading}
+              style={{
+                backgroundColor: "#fff",
+                borderWidth: 1,
+                borderColor: "#E2E8F0",
+                borderRadius: 8,
+                paddingVertical: 14,
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row",
+                gap: 8,
+                marginBottom: 24,
+              }}
+            >
+              {googleLoading
+                ? <ActivityIndicator color="#1E293B" />
+                : <>
+                    <Feather name="globe" size={16} color="#1E293B" />
+                    <Text style={{ color: "#1E293B", fontWeight: "700", fontSize: 15 }}>
+                      Sign in with Google
+                    </Text>
+                  </>
+              }
+            </TouchableOpacity>
+          )}
 
           {/* Footer */}
           <Text style={{ textAlign: "center", fontSize: 11, color: "#94A3B8", lineHeight: 16, marginBottom: 16 }}>
