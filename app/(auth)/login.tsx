@@ -93,13 +93,13 @@ export default function LoginScreen() {
       return;
     }
 
-    // Step 3: Route to the correct dashboard based on role
-    if (profile.role === "student") {
-      router.replace("/(student)");
-    } else if (profile.role === "officer" || profile.role === "admin") {
-      router.replace("/(officer)");
-    } else {
-      // Role exists but is not recognized — block access
+    // Step 3: Navigation is handled by NavigationGuard in app/_layout.tsx.
+    // When signInWithPassword succeeds, AuthContext fires onAuthStateChange,
+    // sets session + profile, and NavigationGuard redirects to the correct
+    // dashboard automatically. No router.replace() needed here.
+    //
+    // We still block unknown roles explicitly for security.
+    if (profile.role !== "student" && profile.role !== "officer" && profile.role !== "admin") {
       await supabase.auth.signOut();
       Alert.alert(
         "Access Denied",
@@ -166,26 +166,32 @@ export default function LoginScreen() {
       return;
     }
 
-    // Step 2: Insert the profile row manually (in case there is no DB trigger)
-    // Role is always "student" for self-registered accounts.
+    // Step 2: Update full_name on the profile row the DB trigger just created.
+    //
+    // WHY UPDATE and not INSERT/UPSERT:
+    // Your DB trigger fires on auth.users INSERT and auto-creates the profile.
+    // But triggers don't read raw_user_meta_data by default, so full_name is
+    // null after signup. We UPDATE the existing row to write the name entered.
+    //
+    // The 800ms delay gives the trigger time to create the row first.
+    // Without it, the UPDATE runs before the row exists and does nothing.
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
     const { error: profileError } = await supabase
       .from("profiles")
-      .upsert({
-        id: data.user.id,           // Must match auth.users id
-        full_name: fullName.trim(),
-        role: "student",            // Default role — admin changes if needed
-      });
+      .update({ full_name: fullName.trim() })  // Only update the name field
+      .eq("id", data.user.id);                 // On the row the trigger created
 
     if (profileError) {
-      console.error("[SignUp] Profile insert failed:", profileError.message);
-      // Don't block the user — profile may already exist via DB trigger
+      // Log but don't block — account was created, only display name is affected.
+      console.error("[SignUp] Profile name update failed:", profileError.message);
     }
 
     setSignUpLoading(false);
 
     Alert.alert(
       "Account Created",
-      "Your account has been created. Please check your email to confirm your address before logging in.",
+      "Your account has been created. You can now sign in.",
       [{ text: "OK", onPress: () => setIsSignUp(false) }],
     );
 
