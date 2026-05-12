@@ -77,6 +77,23 @@ export default function LoginScreen() {
       );
     }
   }
+  const [identifier, setIdentifier]     = useState("");
+  const [password, setPassword]         = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading]           = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+
+  // ── ITEM 3: Sign-up state ──────────────────────────────────────────────────
+  // These track whether we're in sign-up mode and the extra fields needed.
+  const [isSignUp, setIsSignUp]         = useState(false);
+  const [fullName, setFullName]         = useState("");
+  const [signUpLoading, setSignUpLoading] = useState(false);
+
+  const router  = useRouter();
+
+  // useSafeAreaInsets gives us the exact pixel height of system UI elements.
+  // insets.top = status bar height, insets.bottom = nav bar height.
+  const insets  = useSafeAreaInsets();
 
   // ── Login ──────────────────────────────────────────────────────────────────
 
@@ -94,6 +111,7 @@ export default function LoginScreen() {
 
     setLoading(true);
 
+    // Step 1: Sign in with Supabase Auth
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -110,6 +128,7 @@ export default function LoginScreen() {
       return;
     }
 
+    // Step 2: Fetch the user's role from the profiles table
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
@@ -117,6 +136,7 @@ export default function LoginScreen() {
       .single();
 
     if (profileError || !profile) {
+      // Auth succeeded but no profile row exists — block access and sign out
       await supabase.auth.signOut();
       Alert.alert(
         "Account Error",
@@ -126,11 +146,27 @@ export default function LoginScreen() {
       return;
     }
 
-    routeByRole(profile.role);
+    // Step 3: Navigation is handled by NavigationGuard in app/_layout.tsx.
+    // When signInWithPassword succeeds, AuthContext fires onAuthStateChange,
+    // sets session + profile, and NavigationGuard redirects to the correct
+    // dashboard automatically. No router.replace() needed here.
+    //
+    // We still block unknown roles explicitly for security.
+    if (profile.role !== "student" && profile.role !== "officer" && profile.role !== "admin") {
+      await supabase.auth.signOut();
+      Alert.alert(
+        "Access Denied",
+        "Your account does not have a valid role assigned. Contact your administrator.",
+      );
+    }
+
     setLoading(false);
   }
 
-  // ── Sign Up ────────────────────────────────────────────────────────────────
+  // ── ITEM 3: Sign Up ────────────────────────────────────────────────────────
+  // Creates a new Supabase Auth user and inserts a matching profile row.
+  // NOTE: New accounts are created with role = "student" by default.
+  // An admin must manually change the role in Supabase for officer/admin accounts.
 
   async function handleSignUp() {
     const email = identifier.trim();
@@ -139,14 +175,17 @@ export default function LoginScreen() {
       Alert.alert("Missing Name", "Please enter your full name.");
       return;
     }
+
     if (!email || !password) {
       Alert.alert("Missing Fields", "Please fill in all fields.");
       return;
     }
+
     if (!isValidEmail(email)) {
       Alert.alert("Invalid Email", "Please enter a valid email address.");
       return;
     }
+
     if (password.length < 6) {
       Alert.alert("Weak Password", "Password must be at least 6 characters.");
       return;
@@ -154,10 +193,15 @@ export default function LoginScreen() {
 
     setSignUpLoading(true);
 
+    // Step 1: Create the auth user in Supabase Auth
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName.trim() } },
+      options: {
+        // Pass full_name so the database trigger can use it when
+        // auto-creating the profile row (if your DB has that trigger).
+        data: { full_name: fullName.trim() },
+      },
     });
 
     if (signUpError) {
@@ -167,25 +211,44 @@ export default function LoginScreen() {
     }
 
     if (!data.user) {
-      Alert.alert("Sign Up Failed", "Could not create your account. Please try again.");
+      Alert.alert(
+        "Sign Up Failed",
+        "Could not create your account. Please try again.",
+      );
       setSignUpLoading(false);
       return;
     }
 
-    await supabase.from("profiles").upsert({
-      id: data.user.id,
-      full_name: fullName.trim(),
-      role: "student",
-    });
+    // Step 2: Update full_name on the profile row the DB trigger just created.
+    //
+    // WHY UPDATE and not INSERT/UPSERT:
+    // Your DB trigger fires on auth.users INSERT and auto-creates the profile.
+    // But triggers don't read raw_user_meta_data by default, so full_name is
+    // null after signup. We UPDATE the existing row to write the name entered.
+    //
+    // The 800ms delay gives the trigger time to create the row first.
+    // Without it, the UPDATE runs before the row exists and does nothing.
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ full_name: fullName.trim() })  // Only update the name field
+      .eq("id", data.user.id);                 // On the row the trigger created
+
+    if (profileError) {
+      // Log but don't block — account was created, only display name is affected.
+      console.error("[SignUp] Profile name update failed:", profileError.message);
+    }
 
     setSignUpLoading(false);
 
     Alert.alert(
       "Account Created",
-      "Your account has been created. Please check your email to confirm your address before logging in.",
+      "Your account has been created. You can now sign in.",
       [{ text: "OK", onPress: () => setIsSignUp(false) }],
     );
 
+    // Clear the form fields after successful sign-up
     setFullName("");
     setIdentifier("");
     setPassword("");
@@ -259,6 +322,8 @@ export default function LoginScreen() {
         </View>
 
         {/* ── Form card ── */}
+        {/* ITEM 1 FIX: paddingBottom now includes insets.bottom so the form  */}
+        {/* never hides behind the Android 3-button navigation bar.           */}
         <View style={{
           flex: 1,
           backgroundColor: "#fff",
@@ -267,7 +332,8 @@ export default function LoginScreen() {
           paddingBottom: Math.max(32, insets.bottom + 24),
         }}>
 
-          {/* ── Mode toggle ── */}
+          {/* ── Mode toggle: Sign In / Sign Up ── */}
+          {/* ITEM 3: Tabs let the user switch between login and sign-up modes */}
           <View style={{
             flexDirection: "row",
             backgroundColor: "#F1F5F9",
@@ -283,7 +349,10 @@ export default function LoginScreen() {
                 backgroundColor: !isSignUp ? "#1E293B" : "transparent",
               }}
             >
-              <Text style={{ fontSize: 13, fontWeight: "700", color: !isSignUp ? "#fff" : "#64748B" }}>
+              <Text style={{
+                fontSize: 13, fontWeight: "700",
+                color: !isSignUp ? "#fff" : "#64748B",
+              }}>
                 Sign In
               </Text>
             </TouchableOpacity>
@@ -295,13 +364,17 @@ export default function LoginScreen() {
                 backgroundColor: isSignUp ? "#1E293B" : "transparent",
               }}
             >
-              <Text style={{ fontSize: 13, fontWeight: "700", color: isSignUp ? "#fff" : "#64748B" }}>
+              <Text style={{
+                fontSize: 13, fontWeight: "700",
+                color: isSignUp ? "#fff" : "#64748B",
+              }}>
                 Sign Up
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* ── Full Name (sign-up only) ── */}
+          {/* Only shown when isSignUp is true */}
           {isSignUp && (
             <>
               <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748B", letterSpacing: 1, marginBottom: 8 }}>
@@ -353,6 +426,7 @@ export default function LoginScreen() {
             <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748B", letterSpacing: 1 }}>
               PASSWORD
             </Text>
+            {/* Only show Forgot Password in sign-in mode */}
             {!isSignUp && (
               <TouchableOpacity onPress={handleForgotPassword} disabled={resetLoading} hitSlop={8}>
                 {resetLoading
@@ -387,7 +461,7 @@ export default function LoginScreen() {
             onPress={isSignUp ? handleSignUp : handleLogin}
             disabled={anyLoading}
             style={{
-              backgroundColor: anyLoading ? "#475569" : "#1E293B",
+              backgroundColor: (loading || signUpLoading) ? "#475569" : "#1E293B",
               borderRadius: 8,
               paddingVertical: 16,
               alignItems: "center",
@@ -398,8 +472,13 @@ export default function LoginScreen() {
             }}
           >
             {(loading || signUpLoading)
+            {(loading || signUpLoading)
               ? <ActivityIndicator color="#fff" />
               : <>
+                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
+                    {isSignUp ? "Create Account" : "Login"}
+                  </Text>
+                  <Feather name={isSignUp ? "user-plus" : "log-in"} size={16} color="#fff" />
                   <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
                     {isSignUp ? "Create Account" : "Login"}
                   </Text>
@@ -440,6 +519,10 @@ export default function LoginScreen() {
 
           {/* Footer */}
           <Text style={{ textAlign: "center", fontSize: 11, color: "#94A3B8", lineHeight: 16, marginBottom: 16 }}>
+            {isSignUp
+              ? "New accounts are reviewed by administrators.\nRole access is assigned after verification."
+              : "Access is restricted to authorized personnel.\nYour activity is being monitored for compliance."
+            }
             {isSignUp
               ? "New accounts are reviewed by administrators.\nRole access is assigned after verification."
               : "Access is restricted to authorized personnel.\nYour activity is being monitored for compliance."
