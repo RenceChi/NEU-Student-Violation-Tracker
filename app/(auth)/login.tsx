@@ -83,13 +83,13 @@ export default function LoginScreen() {
       return;
     }
 
-    // Step 3: Route by role
-    if (profile.role === "student") {
-      router.replace("/(student)");
-    } else if (profile.role === "officer" || profile.role === "admin") {
-      router.replace("/(officer)");
-    } else {
-      // Unknown role — sign out and block access
+    // Step 3: Navigation is handled by NavigationGuard in app/_layout.tsx.
+    // When signInWithPassword succeeds, AuthContext fires onAuthStateChange,
+    // sets session + profile, and NavigationGuard redirects to the correct
+    // dashboard automatically. No router.replace() needed here.
+    //
+    // We still block unknown roles explicitly for security.
+    if (profile.role !== "student" && profile.role !== "officer" && profile.role !== "admin") {
       await supabase.auth.signOut();
       Alert.alert(
         "Access Denied",
@@ -98,6 +98,97 @@ export default function LoginScreen() {
     }
 
     setLoading(false);
+  }
+
+  // ── ITEM 3: Sign Up ────────────────────────────────────────────────────────
+  // Creates a new Supabase Auth user and inserts a matching profile row.
+  // NOTE: New accounts are created with role = "student" by default.
+  // An admin must manually change the role in Supabase for officer/admin accounts.
+
+  async function handleSignUp() {
+    const email = identifier.trim();
+
+    if (!fullName.trim()) {
+      Alert.alert("Missing Name", "Please enter your full name.");
+      return;
+    }
+
+    if (!email || !password) {
+      Alert.alert("Missing Fields", "Please fill in all fields.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Weak Password", "Password must be at least 6 characters.");
+      return;
+    }
+
+    setSignUpLoading(true);
+
+    // Step 1: Create the auth user in Supabase Auth
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        // Pass full_name so the database trigger can use it when
+        // auto-creating the profile row (if your DB has that trigger).
+        data: { full_name: fullName.trim() },
+      },
+    });
+
+    if (signUpError) {
+      Alert.alert("Sign Up Failed", signUpError.message);
+      setSignUpLoading(false);
+      return;
+    }
+
+    if (!data.user) {
+      Alert.alert(
+        "Sign Up Failed",
+        "Could not create your account. Please try again.",
+      );
+      setSignUpLoading(false);
+      return;
+    }
+
+    // Step 2: Update full_name on the profile row the DB trigger just created.
+    //
+    // WHY UPDATE and not INSERT/UPSERT:
+    // Your DB trigger fires on auth.users INSERT and auto-creates the profile.
+    // But triggers don't read raw_user_meta_data by default, so full_name is
+    // null after signup. We UPDATE the existing row to write the name entered.
+    //
+    // The 800ms delay gives the trigger time to create the row first.
+    // Without it, the UPDATE runs before the row exists and does nothing.
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ full_name: fullName.trim() })  // Only update the name field
+      .eq("id", data.user.id);                 // On the row the trigger created
+
+    if (profileError) {
+      // Log but don't block — account was created, only display name is affected.
+      console.error("[SignUp] Profile name update failed:", profileError.message);
+    }
+
+    setSignUpLoading(false);
+
+    Alert.alert(
+      "Account Created",
+      "Your account has been created. You can now sign in.",
+      [{ text: "OK", onPress: () => setIsSignUp(false) }],
+    );
+
+    // Clear the form fields after successful sign-up
+    setFullName("");
+    setIdentifier("");
+    setPassword("");
   }
 
   // ── Forgot Password ────────────────────────────────────────────────────────
