@@ -235,7 +235,27 @@ Set visibility to **Sensitive** for the anon key. Select **production** as the e
 
 ## Screenshots
 
-_To be added after APK is installed and tested on device._
+### Authentication
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/c8e05d51-2fa6-4234-9a99-10562f433c2d" />
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/19eb7793-a528-4c2f-8b64-e19a84078296" />
+
+### Student View
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/0fba7831-d65e-43e8-a12d-2ce06a55810f" />
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/71409546-871c-4b1a-a7f0-86af44e42f6c" />
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/e99900e2-7dcc-4203-8a5a-56dc2a60b604" />
+
+### Officer View
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/abab6be0-e944-4750-8e8b-293c04d75447" />
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/1fc5ccdf-6ab0-4c53-a6a1-767d1d366a24" />
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/8cd92f24-0a8b-40bd-ad5f-ce29a3e1a189" />
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/51c41747-b3cf-4542-b1dd-dcbc6906c02f" />
+
+
+
+### Admin View 
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/d40ecbfb-4303-4e81-84fc-c7c6cb54c975" />
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/e6af2c40-aad3-429f-a08e-22e36293d4ae" />
+<img width="576" height="1280" alt="image" src="https://github.com/user-attachments/assets/5c10a9d0-b181-4c20-a4c7-23bd67b9ed0f" />
 
 ---
 
